@@ -25,8 +25,10 @@ fi
 
 echo "▶ 2/5 Cloud SQL (PostgreSQL) 인스턴스 준비"
 if ! gcloud sql instances describe "$DB_INSTANCE" >/dev/null 2>&1; then
+  # edition을 명시하지 않으면 프로젝트에 따라 ENTERPRISE_PLUS가 기본이 되어
+  # 공유 코어 tier(db-g1-small)와 충돌한다 → enterprise 고정
   gcloud sql instances create "$DB_INSTANCE" \
-    --database-version=POSTGRES_16 --tier=db-g1-small \
+    --database-version=POSTGRES_16 --edition=enterprise --tier=db-g1-small \
     --region="$REGION" --storage-size=10GB --storage-auto-increase \
     --backup --backup-start-time=03:00
   gcloud sql databases create "$DB_NAME" --instance="$DB_INSTANCE"

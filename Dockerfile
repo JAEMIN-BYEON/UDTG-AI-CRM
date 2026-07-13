@@ -7,6 +7,9 @@ RUN npm ci
 
 COPY . .
 # 운영 DB는 PostgreSQL — 스키마 provider 전환 후 클라이언트 생성 (로컬 개발은 sqlite 유지)
+# 빌드 단계는 DB에 접속하지 않지만, 어댑터 선택(src/lib/db.ts)이 provider와 일치해야
+# 페이지 데이터 수집이 통과하므로 더미 postgres URL을 지정한다 (실제 URL은 런타임 시크릿)
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 RUN sed -i 's/provider = "sqlite"/provider = "postgresql"/' prisma/schema.prisma \
   && npx prisma generate \
   && npm run build

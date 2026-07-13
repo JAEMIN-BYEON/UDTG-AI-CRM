@@ -1,0 +1,122 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+import { recommend } from "@/lib/engine";
+import { generateReasons } from "@/lib/reason";
+
+const CONSENT_POLICY_VERSION = "v1.0-2026-07";
+
+const consultationSchema = z.object({
+  name: z.string().min(1),
+  phone: z.string().min(9),
+  residenceArea: z.string().min(1),
+  age: z.coerce.number().int().min(18).max(80),
+  drivingYears: z.coerce.number().int().min(0).default(0),
+  cargoYears: z.coerce.number().int().min(0).default(0),
+  license: z.string().min(1),
+  hasCargoCert: z.coerce.boolean().default(false),
+  desiredIncome: z.coerce.number().int().min(100),
+  desiredRegion: z.string().min(1),
+  desiredWorkHours: z.string().default(""),
+  shiftAvailability: z.enum(["주간만", "야간만", "둘다"]),
+  desiredBrand: z.string().default(""),
+  fitnessLevel: z.coerce.number().int().min(1).max(5),
+  initialCapital: z.coerce.number().int().min(0),
+  hasVehicle: z.coerce.boolean().default(false),
+  vehiclePreference: z.string().default(""),
+  interestedIn: z.string().default(""),
+  questions: z.string().default(""),
+  sunTopSchedule: z.string().default(""),
+  familyConsent: z.string().default(""),
+  notes: z.string().default(""),
+});
+
+// 상담 접수: 동의 저장 → 상담 생성 → 추천 실행 → 사유 생성 → 저장
+export async function submitConsultation(formData: FormData) {
+  if (formData.get("consent") !== "on") throw new Error("개인정보 수집·이용 동의가 필요합니다.");
+
+  const data = consultationSchema.parse(Object.fromEntries(formData.entries()));
+
+  const consultation = await prisma.consultation.create({
+    data: { ...data, status: "작성중", consents: { create: { consentType: "수집이용", policyVersion: CONSENT_POLICY_VERSION } } },
+  });
+
+  const listings = await prisma.listing.findMany({ where: { isActive: true } });
+  const scored = recommend(consultation, listings);
+  const reasons = await generateReasons(consultation, scored);
+
+  await prisma.$transaction([
+    ...scored.map((s, i) => {
+      const r = reasons.find((x) => x.listingId === s.listing.id)!;
+      return prisma.recommendation.create({
+        data: {
+          consultationId: consultation.id,
+          listingId: s.listing.id,
+          rank: i + 1,
+          score: s.score,
+          scoreBreakdown: JSON.stringify(s.breakdown),
+          reasonText: r.reason,
+          reasonSource: r.source,
+          modelId: r.modelId,
+        },
+      });
+    }),
+    prisma.consultation.update({ where: { id: consultation.id }, data: { status: "추천완료" } }),
+  ]);
+
+  redirect(`/consult/${consultation.id}/result`);
+}
+
+// 최종 상담신청 완료 → 담당자 전달
+export async function finalizeConsultation(consultationId: string) {
+  await prisma.consultation.update({
+    where: { id: consultationId },
+    data: { status: "접수완료", completedAt: new Date() },
+  });
+  revalidatePath("/staff");
+  redirect(`/consult/${consultationId}/done`);
+}
+
+export async function markCounseled(consultationId: string) {
+  await prisma.consultation.update({ where: { id: consultationId }, data: { status: "심층상담완료" } });
+  revalidatePath(`/staff/${consultationId}`);
+  revalidatePath("/staff");
+}
+
+// ── 물량 관리 (운영본부, S3) ──────────────────────────────────
+const listingSchema = z.object({
+  brand: z.string().min(1),
+  category: z.enum(["상온배송", "저온배송", "간선", "식자재"]),
+  region: z.string().min(1),
+  workHours: z.string().min(1),
+  shift: z.enum(["주간", "야간", "격일"]),
+  payStructure: z.enum(["완제", "무제", "매출제"]),
+  incomeMin: z.coerce.number().int(),
+  incomeMax: z.coerce.number().int(),
+  physicalLoad: z.coerce.number().int().min(1).max(5),
+  loadType: z.string().min(1),
+  numberPlates: z.string().min(1),
+  vehicleRequirement: z.string().min(1),
+  initialCapitalMin: z.coerce.number().int(),
+  pros: z.string().min(1),
+  cons: z.string().min(1),
+  sunTopAvailable: z.coerce.boolean().default(false),
+});
+
+export async function saveListing(formData: FormData) {
+  const id = formData.get("id") as string | null;
+  const data = listingSchema.parse(Object.fromEntries(formData.entries()));
+  if (id) await prisma.listing.update({ where: { id }, data });
+  else await prisma.listing.create({ data });
+  revalidatePath("/admin/listings");
+  redirect("/admin/listings");
+}
+
+export async function toggleListing(id: string) {
+  const l = await prisma.listing.findUniqueOrThrow({ where: { id } });
+  await prisma.listing.update({ where: { id }, data: { isActive: !l.isActive } });
+  revalidatePath("/admin/listings");
+}

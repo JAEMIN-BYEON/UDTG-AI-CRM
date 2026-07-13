@@ -64,11 +64,13 @@ else
   OPENAI_SECRET_FLAG=""
 fi
 
-# Cloud Run 런타임 서비스 계정에 시크릿 읽기 권한 부여
+# Cloud Run 런타임 서비스 계정에 필수 권한 부여 (시크릿 읽기 + Cloud SQL 접속)
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
-gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-  --role="roles/secretmanager.secretAccessor" --condition=None >/dev/null
+for role in roles/secretmanager.secretAccessor roles/cloudsql.client; do
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+    --role="$role" --condition=None >/dev/null
+done
 
 echo "▶ 4/5 Cloud Run 배포 (소스에서 빌드)"
 gcloud run deploy "$SERVICE" \

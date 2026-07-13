@@ -27,10 +27,11 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/public ./public
 COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/src ./src
 COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 COPY --from=build /app/next.config.ts ./next.config.ts
 
 EXPOSE 8080
-# 기동 시 스키마 동기화(db push) 후 서버 시작 — 소규모 운영 기준 (트래픽 증가 시 마이그레이션 분리)
-# 주의: Prisma 7 db push에는 --skip-generate 옵션이 없음
-CMD ["sh", "-c", "npx prisma db push && npx next start -p ${PORT}"]
+# 기동 시: 스키마 동기화(db push) → 물량 0건이면 샘플 시드 → 서버 시작
+# (시드는 데이터가 있으면 스스로 건너뜀 — prisma/seed.ts / 주의: Prisma 7 db push에는 --skip-generate 없음)
+CMD ["sh", "-c", "npx prisma db push && npx tsx prisma/seed.ts && npx next start -p ${PORT}"]

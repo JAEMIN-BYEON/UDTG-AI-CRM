@@ -11,7 +11,10 @@
 - **물량 관리** (`/admin/listings`) — 운영본부용 CRUD, 모집 on/off, 30일 미갱신 경고
 - **기록 보존** — 동의 이력(문안 버전), 추천 사유 원문, 점수 근거, 사용 모델 ID 저장
 
-미구현(후속): 교육영상(P3), 다우오피스 연계(P4), 계정/권한(RBAC), 개인정보 암호화·파기 배치. 선탑 일정 확정은 다우오피스 캘린더에서 진행(범위 외).
+- **직원 로그인** — `/staff`, `/admin`은 접속 코드 로그인(서명 쿠키)으로 보호. 키오스크는 무인증
+- **GCP 배포 구성** — Dockerfile + Cloud Run/Cloud SQL 배포 스크립트 + Cloud Build 자동 배포. [docs/DEPLOY.md](docs/DEPLOY.md)
+
+미구현(후속): 교육영상(P3), 다우오피스 연계(P4), 개인정보 컬럼 암호화·파기 배치. 선탑 일정 확정은 다우오피스 캘린더에서 진행(범위 외).
 
 ## 실행
 
@@ -25,9 +28,12 @@ npm run dev          # http://localhost:3000
 환경 변수 (`.env`):
 
 ```
-DATABASE_URL="file:./prisma/dev.db"
-OPENAI_API_KEY=sk-...        # 선택 — 없으면 템플릿 사유로 동작
-OPENAI_MODEL=gpt-4o-mini     # 선택 — 기본값 gpt-4o-mini
+DATABASE_URL="file:./prisma/dev.db"   # 운영은 postgresql://... (어댑터 자동 선택)
+AUTH_SECRET=아무-긴-랜덤-문자열        # 로그인 쿠키 서명 키
+STAFF_PASSCODE=담당자접속코드          # /staff 로그인
+ADMIN_PASSCODE=관리자접속코드          # /admin 로그인 (staff 권한 포함)
+OPENAI_API_KEY=sk-...                 # 선택 — 없으면 템플릿 사유로 동작
+OPENAI_MODEL=gpt-4o-mini              # 선택 — 기본값 gpt-4o-mini
 ```
 
 ## 검증

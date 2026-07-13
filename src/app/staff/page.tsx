@@ -1,6 +1,7 @@
 // S1: 담당자 접수 대시보드
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { logout } from "@/app/login/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,12 @@ export default async function StaffPage() {
     <main className="mx-auto max-w-5xl p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">담당자 대시보드</h1>
-        <Link href="/" className="text-sm text-slate-400 hover:text-slate-600">← 홈</Link>
+        <div className="flex items-center gap-3">
+          <Link href="/" className="text-sm text-slate-400 hover:text-slate-600">← 홈</Link>
+          <form action={logout}>
+            <button className="text-sm text-slate-400 hover:text-slate-600">로그아웃</button>
+          </form>
+        </div>
       </div>
 
       <div className="mt-4 flex gap-4">

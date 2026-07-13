@@ -55,8 +55,13 @@ async function main() {
   await page.waitForURL(/\/done/, { timeout: 15000 });
   console.log("접수 완료 페이지 도달 ✓");
 
-  // S1: 담당자 대시보드
+  // S1: 담당자 대시보드 (로그인 필요 — 미들웨어가 /login으로 보내는지 확인)
   await page.goto(`${BASE}/staff`);
+  await page.waitForURL(/\/login/, { timeout: 15000 });
+  console.log("미인증 접근 → 로그인 리다이렉트 ✓");
+  await page.fill('input[name="passcode"]', process.env.STAFF_PASSCODE ?? "staff123");
+  await page.click("form button");
+  await page.waitForURL(/\/staff/, { timeout: 15000 });
   const row = await page.textContent("tbody tr");
   console.log("대시보드 첫 행:", row?.replace(/\s+/g, " ").trim().slice(0, 80));
   await page.screenshot({ path: `${SHOT_DIR}/4-staff.png` });

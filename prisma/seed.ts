@@ -1,11 +1,7 @@
 import "dotenv/config";
 // 물량 시드 데이터 — 설계서 §7.2 검증 케이스를 커버하도록 구성
-import { PrismaClient } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-
-const prisma = new PrismaClient({
-  adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./prisma/dev.db" }),
-});
+// DATABASE_URL에 따라 SQLite/PostgreSQL 자동 선택 (src/lib/db.ts)
+import { prisma } from "../src/lib/db";
 
 const listings = [
   {

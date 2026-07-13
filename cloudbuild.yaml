@@ -1,0 +1,27 @@
+# Cloud Build 트리거용 — GitHub push 시 자동 빌드·배포
+# (최초 1회 deploy/deploy.sh 로 서비스·DB·시크릿을 만든 뒤 사용.
+#  gcloud run deploy는 기존 리비전의 시크릿/Cloud SQL 연결 설정을 그대로 유지한다)
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_IMAGE}", "."]
+  - name: gcr.io/cloud-builders/docker
+    args: ["push", "${_IMAGE}"]
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_IMAGE}
+      - --region=${_REGION}
+
+substitutions:
+  _SERVICE: udtg-ai-crm
+  _REGION: asia-northeast3
+  _IMAGE: asia-northeast3-docker.pkg.dev/${PROJECT_ID}/udtg/udtg-ai-crm:${SHORT_SHA}
+
+images:
+  - ${_IMAGE}
+
+options:
+  logging: CLOUD_LOGGING_ONLY

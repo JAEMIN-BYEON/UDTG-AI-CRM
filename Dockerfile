@@ -19,6 +19,8 @@ FROM node:22-slim
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8080
+# Prisma CLI(db push)가 libssl을 요구
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/package.json /app/package-lock.json ./
 COPY --from=build /app/node_modules ./node_modules
@@ -30,4 +32,5 @@ COPY --from=build /app/next.config.ts ./next.config.ts
 
 EXPOSE 8080
 # 기동 시 스키마 동기화(db push) 후 서버 시작 — 소규모 운영 기준 (트래픽 증가 시 마이그레이션 분리)
-CMD ["sh", "-c", "npx prisma db push --skip-generate && npx next start -p ${PORT}"]
+# 주의: Prisma 7 db push에는 --skip-generate 옵션이 없음
+CMD ["sh", "-c", "npx prisma db push && npx next start -p ${PORT}"]

@@ -2,6 +2,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { finalizeConsultation } from "@/app/actions";
+import { FinalizeButton } from "./finalize-button";
 
 export default async function ResultPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -62,9 +63,7 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
       </div>
 
       <form action={finalizeConsultation.bind(null, consultation.id)} className="mt-10">
-        <button className="w-full rounded-2xl bg-blue-600 px-8 py-6 text-2xl font-bold text-white shadow-lg transition hover:bg-blue-700">
-          이 내용으로 상담 신청 완료
-        </button>
+        <FinalizeButton />
         <p className="mt-3 text-center text-slate-400">완료하시면 담당자에게 전달되어 심층 상담이 진행됩니다.</p>
       </form>
     </main>

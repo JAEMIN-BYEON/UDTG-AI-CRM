@@ -4,6 +4,7 @@
 // 고령 고객 배려: 큰 글씨, 한 화면 한 주제, 선택형 위주
 import { useState } from "react";
 import { submitConsultation } from "@/app/actions";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 
 const STEPS = ["동의", "개인정보", "희망 조건", "상담 내용", "확인"] as const;
 
@@ -35,6 +36,17 @@ export default function ConsultPage() {
 
   return (
     <main className="mx-auto max-w-2xl p-6 pb-24">
+      {submitting && (
+        <LoadingOverlay
+          title="AI가 분석하고 있습니다"
+          steps={[
+            "입력하신 조건을 확인하는 중...",
+            "보유 물량과 대조하는 중...",
+            "적합도를 계산하는 중...",
+            "추천 사유를 작성하는 중...",
+          ]}
+        />
+      )}
       {/* 진행 표시 */}
       <div className="mb-8 flex items-center gap-2">
         {STEPS.map((s, i) => (
@@ -196,7 +208,7 @@ export default function ConsultPage() {
         </div>
       </form>
       {/* 화면이 최신 배포인지 확인용 버전 표시 */}
-      <p className="mt-12 text-center text-xs text-slate-300">v0.3.0</p>
+      <p className="mt-12 text-center text-xs text-slate-300">v0.4.0</p>
     </main>
   );
 }

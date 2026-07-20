@@ -4,8 +4,9 @@ import Link from "next/link";
 export default function DonePage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center gap-6 p-8 text-center">
-      <div className="text-7xl">✅</div>
+      <div className="animate-bounce text-7xl">✅</div>
       <h1 className="text-3xl font-bold">상담 신청이 완료되었습니다</h1>
+      <p className="rounded-full bg-emerald-50 px-5 py-2 font-semibold text-emerald-700">담당자에게 전달되었습니다</p>
       <p className="text-xl text-slate-500">
         담당자가 추천 내용을 확인한 뒤<br />곧 심층 상담을 도와드리겠습니다.
       </p>

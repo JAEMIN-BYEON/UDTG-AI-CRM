@@ -208,7 +208,7 @@ export default function ConsultPage() {
         </div>
       </form>
       {/* 화면이 최신 배포인지 확인용 버전 표시 */}
-      <p className="mt-12 text-center text-xs text-slate-300">v0.5.0</p>
+      <p className="mt-12 text-center text-xs text-slate-300">v0.6.0</p>
     </main>
   );
 }

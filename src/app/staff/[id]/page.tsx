@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { markCounseled, revertCounseled, deleteConsultation } from "@/app/actions";
 import { PrintButton } from "./print-button";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { fmtFull } from "@/lib/dates";
 import type { ScoreItem } from "@/lib/engine";
 
 export default async function StaffDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -17,7 +18,7 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
       videoViews: { include: { video: true } },
     },
   });
-  if (!c) notFound();
+  if (!c || c.deletedAt) notFound();
 
   const row = "flex justify-between border-b border-slate-100 py-1.5 text-sm";
   const dt = "text-slate-400";
@@ -40,7 +41,7 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
           )}
           <form action={deleteConsultation.bind(null, c.id)}>
             <ConfirmButton
-              message={`${c.name}님의 상담 기록을 삭제할까요?\n추천 결과·동의 이력이 함께 삭제되며 되돌릴 수 없습니다.`}
+              message={`${c.name}님의 상담 기록을 휴지통으로 이동할까요?\n(휴지통에서 복구할 수 있습니다)`}
               className="rounded-lg border border-rose-200 px-4 py-2 text-sm font-bold text-rose-500 hover:bg-rose-50"
             >
               삭제
@@ -60,7 +61,7 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
             </span>
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            접수: {c.createdAt.toLocaleString("ko-KR")} · 상태: {c.status} · 동의: {c.consents.map((x) => `${x.consentType}(${x.policyVersion})`).join(", ")}
+            접수: {fmtFull(c.createdAt)} · 상태: {c.status} · 동의: {c.consents.map((x) => `${x.consentType}(${x.policyVersion})`).join(", ")}
           </p>
         </div>
 

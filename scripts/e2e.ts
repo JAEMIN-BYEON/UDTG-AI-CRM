@@ -89,7 +89,16 @@ async function main() {
   page.once("dialog", (d) => d.accept());
   await page.locator("button:has-text('삭제')").first().click();
   await page.waitForURL(/\/staff$/, { timeout: 15000 });
-  console.log("상담 삭제 ✓");
+  console.log("상담 삭제(휴지통 이동) ✓");
+
+  // 휴지통 복구
+  await page.goto(`${BASE}/staff/trash`);
+  await page.waitForSelector("text=상담 휴지통");
+  await page.locator("button:has-text('복구')").first().click();
+  await page.waitForTimeout(2000);
+  await page.goto(`${BASE}/staff`);
+  await page.waitForSelector("text=김운수");
+  console.log("휴지통 복구 ✓");
 
   await browser.close();
   console.log("\nE2E 통과");

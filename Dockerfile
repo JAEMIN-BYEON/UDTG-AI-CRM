@@ -19,6 +19,8 @@ FROM node:22-slim
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8080
+# 시간 표시 기준: 한국 시간 (코드에서도 Asia/Seoul 명시하지만 이중 안전장치)
+ENV TZ=Asia/Seoul
 # Prisma CLI(db push)가 libssl을 요구
 RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 

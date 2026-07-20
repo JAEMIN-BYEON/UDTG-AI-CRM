@@ -5,6 +5,7 @@ import { logout } from "@/app/login/actions";
 import { deleteConsultation } from "@/app/actions";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { fmtDateTime, isSameSeoulDay } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +19,15 @@ const statusColor: Record<string, string> = {
 export default async function StaffPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
   const consultations = await prisma.consultation.findMany({
-    where: q ? { OR: [{ name: { contains: q } }, { phone: { contains: q } }] } : undefined,
+    where: {
+      deletedAt: null,
+      ...(q ? { OR: [{ name: { contains: q } }, { phone: { contains: q } }] } : {}),
+    },
     orderBy: { createdAt: "desc" },
     include: { recommendations: { include: { listing: true }, orderBy: { rank: "asc" }, take: 1 } },
   });
 
-  const today = consultations.filter((c) => c.createdAt.toDateString() === new Date().toDateString()).length;
+  const today = consultations.filter((c) => isSameSeoulDay(c.createdAt, new Date())).length;
   const pending = consultations.filter((c) => c.status === "접수완료").length;
 
   return (
@@ -32,6 +36,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
         <h1 className="text-2xl font-bold">담당자 대시보드</h1>
         <div className="flex items-center gap-3">
           <AutoRefresh seconds={30} />
+          <Link href="/staff/trash" className="text-sm text-slate-400 hover:text-slate-600">🗑 휴지통</Link>
           <Link href="/" className="text-sm text-slate-400 hover:text-slate-600">← 홈</Link>
           <form action={logout}>
             <button className="text-sm text-slate-400 hover:text-slate-600">로그아웃</button>
@@ -69,9 +74,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
           <tbody className="divide-y divide-slate-100">
             {consultations.map((c) => (
               <tr key={c.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 text-sm text-slate-500">
-                  {c.createdAt.toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                </td>
+                <td className="px-4 py-3 text-sm text-slate-500">{fmtDateTime(c.createdAt)}</td>
                 <td className="px-4 py-3 font-semibold">{c.name} <span className="text-sm font-normal text-slate-400">({c.age}세)</span></td>
                 <td className="px-4 py-3 text-sm">{c.desiredRegion} · {c.shiftAvailability} · 월 {c.desiredIncome}만원</td>
                 <td className="px-4 py-3 text-sm">{c.recommendations[0] ? `${c.recommendations[0].listing.brand} ${c.recommendations[0].listing.category}` : "-"}</td>
@@ -81,7 +84,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
                     <Link href={`/staff/${c.id}`} className="font-semibold text-blue-600 hover:underline">상세 →</Link>
                     <form action={deleteConsultation.bind(null, c.id)}>
                       <ConfirmButton
-                        message={`${c.name}님의 상담 기록을 삭제할까요?\n추천 결과·동의 이력이 함께 삭제되며 되돌릴 수 없습니다.`}
+                        message={`${c.name}님의 상담 기록을 휴지통으로 이동할까요?\n(휴지통에서 복구할 수 있습니다)`}
                         className="text-sm text-slate-300 hover:text-rose-500"
                       >
                         삭제

@@ -44,7 +44,9 @@ export async function submitConsultation(formData: FormData) {
     data: { ...data, status: "작성중", consents: { create: { consentType: "수집이용", policyVersion: CONSENT_POLICY_VERSION } } },
   });
 
-  const listings = await prisma.listing.findMany({ where: { isActive: true } });
+  const listings = await prisma.listing.findMany({
+    where: { isActive: true, deletedAt: null, slotCount: { gt: 0 } },
+  });
   const scored = recommend(consultation, listings);
   const reasons = await generateReasons(consultation, scored);
 
@@ -93,16 +95,28 @@ export async function revertCounseled(consultationId: string) {
   revalidatePath("/staff");
 }
 
-// 상담 삭제 — 연결된 추천/동의/시청 이력까지 함께 제거
+// 상담 삭제 — 휴지통으로 이동 (소프트 삭제, /staff/trash 에서 복구 가능)
 export async function deleteConsultation(consultationId: string) {
+  await prisma.consultation.update({ where: { id: consultationId }, data: { deletedAt: new Date() } });
+  revalidatePath("/staff");
+  redirect("/staff");
+}
+
+export async function restoreConsultation(consultationId: string) {
+  await prisma.consultation.update({ where: { id: consultationId }, data: { deletedAt: null } });
+  revalidatePath("/staff");
+  revalidatePath("/staff/trash");
+}
+
+// 영구 삭제 — 연결된 추천/동의/시청 이력까지 완전 제거 (복구 불가)
+export async function purgeConsultation(consultationId: string) {
   await prisma.$transaction([
     prisma.recommendation.deleteMany({ where: { consultationId } }),
     prisma.consent.deleteMany({ where: { consultationId } }),
     prisma.videoView.deleteMany({ where: { consultationId } }),
     prisma.consultation.delete({ where: { id: consultationId } }),
   ]);
-  revalidatePath("/staff");
-  redirect("/staff");
+  revalidatePath("/staff/trash");
 }
 
 // ── 물량 관리 (운영본부, S3) ──────────────────────────────────
@@ -120,6 +134,7 @@ const listingSchema = z.object({
   numberPlates: z.string().min(1),
   vehicleRequirement: z.string().min(1),
   initialCapitalMin: z.coerce.number().int(),
+  slotCount: z.coerce.number().int().min(0),
   pros: z.string().min(1),
   cons: z.string().min(1),
   sunTopAvailable: z.coerce.boolean().default(false),
@@ -140,13 +155,28 @@ export async function toggleListing(id: string) {
   revalidatePath("/admin/listings");
 }
 
-// 물량 삭제 — 추천 이력이 참조 중이면 기록 보존을 위해 삭제 대신 모집중지 처리 (설계서 §6.3)
+// 물량 삭제 — 휴지통으로 이동 (소프트 삭제, /admin/listings/trash 에서 복구 가능)
 export async function deleteListing(id: string) {
+  await prisma.listing.update({ where: { id }, data: { deletedAt: new Date() } });
+  revalidatePath("/admin/listings");
+}
+
+export async function restoreListing(id: string) {
+  await prisma.listing.update({ where: { id }, data: { deletedAt: null } });
+  revalidatePath("/admin/listings");
+  revalidatePath("/admin/listings/trash");
+}
+
+// 영구 삭제 — 추천 이력이 참조하는 물량은 상담 기록 보존을 위해 영구 삭제 불가
+export async function purgeListing(id: string) {
   const refs = await prisma.recommendation.count({ where: { listingId: id } });
-  if (refs > 0) {
-    await prisma.listing.update({ where: { id }, data: { isActive: false } });
-  } else {
-    await prisma.listing.delete({ where: { id } });
-  }
+  if (refs === 0) await prisma.listing.delete({ where: { id } });
+  revalidatePath("/admin/listings/trash");
+}
+
+// 모집 대수 조절 (센터별 잔여 대수 관리 — 0이 되면 추천에서 자동 제외)
+export async function adjustSlot(id: string, delta: number) {
+  const l = await prisma.listing.findUniqueOrThrow({ where: { id } });
+  await prisma.listing.update({ where: { id }, data: { slotCount: Math.max(0, l.slotCount + delta) } });
   revalidatePath("/admin/listings");
 }

@@ -26,7 +26,8 @@ function hardFilter(
   opts: { relaxRegion: boolean; relaxCapital: boolean }
 ): { listing: Listing; regionRelaxed: boolean; capitalRelaxed: boolean }[] {
   return listings
-    .filter((l) => l.isActive)
+    // 모집중 + 남은 대수 있음 + 휴지통 아님만 추천 대상
+    .filter((l) => l.isActive && l.slotCount > 0 && !l.deletedAt)
     .filter((l) => {
       // 주/야간 가능 여부 (자금과 달리 상담으로 풀 수 없는 조건 → 항상 하드)
       if (c.shiftAvailability === "주간만" && l.shift === "야간") return false;

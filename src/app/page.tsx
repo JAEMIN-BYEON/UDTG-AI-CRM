@@ -21,7 +21,7 @@ export default function Home() {
         <span>·</span>
         <Link href="/admin/listings" className="hover:text-slate-600">물량 관리</Link>
       </div>
-      <p className="text-xs text-slate-300">v0.5.0</p>
+      <p className="text-xs text-slate-300">v0.6.0</p>
     </main>
   );
 }

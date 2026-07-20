@@ -39,6 +39,12 @@ export function ListingForm({ listing }: { listing?: Listing }) {
         <div><span className={label}>최소 초기자금 (만원) *</span><input name="initialCapitalMin" required type="number" defaultValue={listing?.initialCapitalMin} className={field} /></div>
       </div>
 
+      <div>
+        <span className={label}>모집 대수 (센터별 잔여 자리) *</span>
+        <input name="slotCount" required type="number" min={0} defaultValue={listing?.slotCount ?? 1} className={field} />
+        <p className="mt-1 text-xs text-slate-400">0이면 AI 추천에서 제외됩니다. 목록 화면에서 ＋/− 로도 조절할 수 있습니다.</p>
+      </div>
+
       <div className="grid grid-cols-3 gap-4">
         <div>
           <span className={label}>상하차 강도 (1~5) *</span>

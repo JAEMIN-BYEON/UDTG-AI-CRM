@@ -28,6 +28,8 @@ model Listing {
   cons               String
   sunTopAvailable    Boolean  @default(true)
   isActive           Boolean  @default(true)
+  slotCount          Int      @default(1) // 모집 가능 대수 — 0이면 추천 제외
+  deletedAt          DateTime? // 휴지통 (소프트 삭제)
   updatedAt          DateTime @updatedAt
   createdAt          DateTime @default(now())
 
@@ -69,6 +71,7 @@ model Consultation {
 
   createdAt   DateTime  @default(now())
   completedAt DateTime?
+  deletedAt   DateTime? // 휴지통 (소프트 삭제)
 
   recommendations Recommendation[]
   consents        Consent[]

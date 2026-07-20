@@ -1,5 +1,6 @@
 // K4: 접수 완료
 import Link from "next/link";
+import { AutoReturn } from "@/components/AutoReturn";
 
 export default function DonePage() {
   return (
@@ -13,6 +14,7 @@ export default function DonePage() {
       <Link href="/" className="mt-6 rounded-xl border border-slate-300 px-8 py-4 text-lg font-semibold text-slate-600">
         처음 화면으로
       </Link>
+      <AutoReturn seconds={30} />
     </main>
   );
 }

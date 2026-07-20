@@ -86,6 +86,25 @@ export async function markCounseled(consultationId: string) {
   revalidatePath("/staff");
 }
 
+// 심층상담 완료 되돌리기 (잘못 눌렀을 때)
+export async function revertCounseled(consultationId: string) {
+  await prisma.consultation.update({ where: { id: consultationId }, data: { status: "접수완료" } });
+  revalidatePath(`/staff/${consultationId}`);
+  revalidatePath("/staff");
+}
+
+// 상담 삭제 — 연결된 추천/동의/시청 이력까지 함께 제거
+export async function deleteConsultation(consultationId: string) {
+  await prisma.$transaction([
+    prisma.recommendation.deleteMany({ where: { consultationId } }),
+    prisma.consent.deleteMany({ where: { consultationId } }),
+    prisma.videoView.deleteMany({ where: { consultationId } }),
+    prisma.consultation.delete({ where: { id: consultationId } }),
+  ]);
+  revalidatePath("/staff");
+  redirect("/staff");
+}
+
 // ── 물량 관리 (운영본부, S3) ──────────────────────────────────
 const listingSchema = z.object({
   brand: z.string().min(1),
@@ -118,5 +137,16 @@ export async function saveListing(formData: FormData) {
 export async function toggleListing(id: string) {
   const l = await prisma.listing.findUniqueOrThrow({ where: { id } });
   await prisma.listing.update({ where: { id }, data: { isActive: !l.isActive } });
+  revalidatePath("/admin/listings");
+}
+
+// 물량 삭제 — 추천 이력이 참조 중이면 기록 보존을 위해 삭제 대신 모집중지 처리 (설계서 §6.3)
+export async function deleteListing(id: string) {
+  const refs = await prisma.recommendation.count({ where: { listingId: id } });
+  if (refs > 0) {
+    await prisma.listing.update({ where: { id }, data: { isActive: false } });
+  } else {
+    await prisma.listing.delete({ where: { id } });
+  }
   revalidatePath("/admin/listings");
 }

@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { markCounseled } from "@/app/actions";
+import { markCounseled, revertCounseled, deleteConsultation } from "@/app/actions";
 import { PrintButton } from "./print-button";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import type { ScoreItem } from "@/lib/engine";
 
 export default async function StaffDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,13 +26,26 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
     <main className="mx-auto max-w-3xl p-6 print:p-0">
       <div className="mb-4 flex items-center justify-between print:hidden">
         <Link href="/staff" className="text-sm text-slate-400 hover:text-slate-600">← 대시보드</Link>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <PrintButton />
           {c.status === "접수완료" && (
             <form action={markCounseled.bind(null, c.id)}>
               <button className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white">심층 상담 완료 처리</button>
             </form>
           )}
+          {c.status === "심층상담완료" && (
+            <form action={revertCounseled.bind(null, c.id)}>
+              <button className="rounded-lg border border-emerald-600 px-4 py-2 text-sm font-bold text-emerald-700">완료 취소 (접수완료로 되돌리기)</button>
+            </form>
+          )}
+          <form action={deleteConsultation.bind(null, c.id)}>
+            <ConfirmButton
+              message={`${c.name}님의 상담 기록을 삭제할까요?\n추천 결과·동의 이력이 함께 삭제되며 되돌릴 수 없습니다.`}
+              className="rounded-lg border border-rose-200 px-4 py-2 text-sm font-bold text-rose-500 hover:bg-rose-50"
+            >
+              삭제
+            </ConfirmButton>
+          </form>
         </div>
       </div>
 
@@ -40,7 +54,10 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
         <div className="border-b-2 border-slate-800 pb-3">
           <p className="text-xs font-bold tracking-widest text-slate-400">운수대통로지스 · 상담 요약 리포트</p>
           <h1 className="mt-1 text-2xl font-bold">
-            {c.name} <span className="text-base font-normal text-slate-500">({c.age}세 · {c.phone})</span>
+            {c.name}{" "}
+            <span className="text-base font-normal text-slate-500">
+              ({c.age}세 · <a href={`tel:${c.phone}`} className="text-blue-600 hover:underline print:text-slate-500">{c.phone}</a>)
+            </span>
           </h1>
           <p className="mt-1 text-sm text-slate-500">
             접수: {c.createdAt.toLocaleString("ko-KR")} · 상태: {c.status} · 동의: {c.consents.map((x) => `${x.consentType}(${x.policyVersion})`).join(", ")}

@@ -11,8 +11,15 @@ async function main() {
   const page = await browser.newPage({ viewport: { width: 1024, height: 1400 } });
 
   // K1: 동의
-  await page.goto(`${BASE}/consult`);
+  await page.goto(`${BASE}/consult`, { waitUntil: "networkidle" });
   await page.check('input[name="consent"]');
+  // 하이드레이션 전 클릭이 씹힐 수 있어 재시도
+  for (let i = 0; i < 10; i++) {
+    if (await page.locator("text=다음 →").isEnabled()) break;
+    await page.uncheck('input[name="consent"]').catch(() => {});
+    await page.check('input[name="consent"]');
+    await page.waitForTimeout(300);
+  }
   await page.screenshot({ path: `${SHOT_DIR}/1-consent.png` });
   await page.click("text=다음 →");
 
@@ -67,10 +74,22 @@ async function main() {
   await page.screenshot({ path: `${SHOT_DIR}/4-staff.png` });
 
   // S2: 상세 리포트
-  await page.click("text=상세 →");
+  await page.locator("text=상세 →").first().click();
   await page.waitForSelector("text=상담 요약 리포트");
   await page.screenshot({ path: `${SHOT_DIR}/5-report.png`, fullPage: true });
   console.log("담당자 리포트 확인 ✓");
+
+  // 심층 상담 완료 → 되돌리기 → 삭제
+  await page.click("text=심층 상담 완료 처리");
+  await page.waitForSelector("text=완료 취소", { timeout: 15000 });
+  console.log("심층 상담 완료 처리 ✓");
+  await page.click("text=완료 취소");
+  await page.waitForSelector("text=심층 상담 완료 처리", { timeout: 15000 });
+  console.log("완료 되돌리기 ✓");
+  page.once("dialog", (d) => d.accept());
+  await page.locator("button:has-text('삭제')").first().click();
+  await page.waitForURL(/\/staff$/, { timeout: 15000 });
+  console.log("상담 삭제 ✓");
 
   await browser.close();
   console.log("\nE2E 통과");

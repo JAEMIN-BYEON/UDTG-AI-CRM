@@ -1,7 +1,8 @@
 // S3: 물량 관리 (운영본부) — 추천 품질의 원천 데이터
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { toggleListing } from "@/app/actions";
+import { toggleListing, deleteListing } from "@/app/actions";
+import { ConfirmButton } from "@/components/ConfirmButton";
 
 export const dynamic = "force-dynamic";
 
@@ -54,14 +55,29 @@ export default async function ListingsPage() {
                       </button>
                     </form>
                   </td>
-                  <td className="px-4 py-3"><Link href={`/admin/listings/${l.id}/edit`} className="font-semibold text-blue-600 hover:underline">수정</Link></td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <Link href={`/admin/listings/${l.id}/edit`} className="font-semibold text-blue-600 hover:underline">수정</Link>
+                      <form action={deleteListing.bind(null, l.id)}>
+                        <ConfirmButton
+                          message={`"${l.brand} ${l.category}" 물량을 삭제할까요?\n※ 이 물량으로 추천된 상담 이력이 있으면 기록 보존을 위해 삭제 대신 '모집중지' 처리됩니다.`}
+                          className="text-sm text-slate-300 hover:text-rose-500"
+                        >
+                          삭제
+                        </ConfirmButton>
+                      </form>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-xs text-slate-400">※ 물량 정보가 최신이어야 AI 추천 품질이 유지됩니다. 30일 이상 미갱신 물량은 경고가 표시됩니다.</p>
+      <p className="mt-3 text-xs text-slate-400">
+        ※ 물량 정보가 최신이어야 AI 추천 품질이 유지됩니다. 30일 이상 미갱신 물량은 경고가 표시됩니다.<br />
+        ※ 추천 이력이 있는 물량은 상담 기록 보존을 위해 삭제 시 &lsquo;모집중지&rsquo;로 전환됩니다.
+      </p>
     </main>
   );
 }

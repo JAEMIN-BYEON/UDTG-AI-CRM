@@ -23,29 +23,29 @@ async function main() {
   await page.screenshot({ path: `${SHOT_DIR}/1-consent.png` });
   await page.click("text=다음 →");
 
-  // K2-1: 개인정보
+  // K2-1: 기본 정보 (7.20 개편안)
   await page.fill('input[name="name"]', "김운수");
   await page.fill('input[name="phone"]', "010-1234-5678");
-  await page.fill('input[name="residenceArea"]', "용인");
+  await page.click('label:has(input[name="residenceArea"][value="경기남부"])');
   await page.fill('input[name="age"]', "52");
-  await page.fill('input[name="drivingYears"]', "20");
   await page.fill('input[name="cargoYears"]', "0");
   await page.click('label:has(input[name="license"][value="1종 보통"])');
   await page.click("text=다음 →");
 
-  // K2-2: 희망 조건
-  await page.fill('input[name="desiredIncome"]', "380");
+  // K2-2: 희망 조건 (희망월순이익 선택형 + 신용상태)
+  await page.click('label:has(input[name="desiredIncome"][value="400"])');
   await page.fill('input[name="desiredRegion"]', "용인");
   await page.click('label:has(input[name="shiftAvailability"][value="주간만"])');
+  await page.fill('input[name="unavailableTimes"]', "새벽 4시 이전 어려움");
   await page.click('label:has(input[name="fitnessLevel"][value="3"])');
   await page.fill('input[name="initialCapital"]', "1000");
+  await page.click('label:has(input[name="creditStatus"][value="보통"])');
   await page.screenshot({ path: `${SHOT_DIR}/2-form.png` });
   await page.click("text=다음 →");
 
   // K2-3: 상담 내용
-  await page.fill('input[name="interestedIn"]', "다이소 배송");
   await page.fill('textarea[name="questions"]', "실수령액이 얼마나 되는지 궁금합니다");
-  await page.fill('input[name="sunTopSchedule"]', "다음 주 화~목 가능");
+  await page.fill('input[name="sunTopSchedule"]', "화요일 오전 불가");
   await page.click("text=다음 →");
 
   // K2-4: 제출
@@ -97,8 +97,8 @@ async function main() {
   await page.locator("button:has-text('복구')").first().click();
   await page.waitForTimeout(2000);
   await page.goto(`${BASE}/staff`);
-  await page.waitForSelector("text=김운수");
-  console.log("휴지통 복구 ✓");
+  await page.waitForSelector("text=김*수"); // 목록은 이름 마스킹 (7.20 회의)
+  console.log("휴지통 복구 ✓ (목록 이름 마스킹 확인)");
 
   await browser.close();
   console.log("\nE2E 통과");

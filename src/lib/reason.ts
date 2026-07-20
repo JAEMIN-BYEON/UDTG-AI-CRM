@@ -19,14 +19,16 @@ export async function generateReasons(c: Consultation, scored: Scored[]): Promis
     // 개인 식별 정보(성명·연락처)는 컨텍스트에서 제외 (설계서 §11)
     const customer = {
       연령: c.age,
-      운전경력_년: c.drivingYears,
       화물경력_년: c.cargoYears,
-      희망월수입_만원: c.desiredIncome,
+      희망월순이익_만원: c.desiredIncome,
       희망지역: c.desiredRegion,
       주야간: c.shiftAvailability,
+      근무불가시간: c.unavailableTimes || "없음",
       체력수준_1_5: c.fitnessLevel,
       초기자금_만원: c.initialCapital,
+      신용상태: c.creditStatus || "미입력",
       차량보유: c.hasVehicle,
+      보유차량: c.hasVehicle ? `${c.vehicleTonnage} ${c.vehicleBodyType}` : "없음",
       희망브랜드: c.desiredBrand || "무관",
     };
     const items = scored.map((s) => ({

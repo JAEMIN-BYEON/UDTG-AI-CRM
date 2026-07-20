@@ -92,9 +92,10 @@ function scoreOne(c: Consultation, l: Listing): ScoreItem[] {
     note: novice ? (hardCourse ? "화물 초보에게 난이도 높은 코스" : "화물 초보도 적응하기 쉬운 코스") : `화물 경력 ${c.cargoYears}년`,
   });
 
-  // 희망 브랜드 일치 (10)
-  const brandHit = c.desiredBrand !== "" && l.brand.includes(c.desiredBrand);
-  items.push({ label: "희망 브랜드", points: brandHit ? 10 : c.desiredBrand === "" ? 5 : 0, max: 10, note: brandHit ? `희망 브랜드(${c.desiredBrand}) 일치` : c.desiredBrand === "" ? "브랜드 무관" : "희망 브랜드와 다름" });
+  // 희망 브랜드 일치 (10) — 복수 선택 지원 (콤마 구분)
+  const wanted = csv(c.desiredBrand);
+  const brandHit = wanted.length > 0 && wanted.some((b) => l.brand.includes(b) || b.includes(l.brand));
+  items.push({ label: "희망 브랜드", points: brandHit ? 10 : wanted.length === 0 ? 5 : 0, max: 10, note: brandHit ? `희망 브랜드(${wanted.join("/")}) 일치` : wanted.length === 0 ? "브랜드 무관" : "희망 브랜드와 다름" });
 
   // 초기 자금 여유 (10)
   const rental = csv(l.numberPlates).includes("법인임대");

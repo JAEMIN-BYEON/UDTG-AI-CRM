@@ -6,6 +6,7 @@ import { deleteConsultation } from "@/app/actions";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { fmtDateTime, isSameSeoulDay } from "@/lib/dates";
+import { maskName } from "@/lib/privacy";
 
 export const dynamic = "force-dynamic";
 
@@ -75,7 +76,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
             {consultations.map((c) => (
               <tr key={c.id} className="hover:bg-slate-50">
                 <td className="px-4 py-3 text-sm text-slate-500">{fmtDateTime(c.createdAt)}</td>
-                <td className="px-4 py-3 font-semibold">{c.name} <span className="text-sm font-normal text-slate-400">({c.age}세)</span></td>
+                <td className="px-4 py-3 font-semibold">{maskName(c.name)} <span className="text-sm font-normal text-slate-400">({c.age}세)</span></td>
                 <td className="px-4 py-3 text-sm">{c.desiredRegion} · {c.shiftAvailability} · 월 {c.desiredIncome}만원</td>
                 <td className="px-4 py-3 text-sm">{c.recommendations[0] ? `${c.recommendations[0].listing.brand} ${c.recommendations[0].listing.category}` : "-"}</td>
                 <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${statusColor[c.status] ?? ""}`}>{c.status}</span></td>

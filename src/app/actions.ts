@@ -18,14 +18,18 @@ const consultationSchema = z.object({
   cargoYears: z.coerce.number().int().min(0).default(0),
   license: z.string().min(1),
   hasCargoCert: z.coerce.boolean().default(false),
-  desiredIncome: z.coerce.number().int().min(100),
+  desiredIncome: z.coerce.number().int().min(100), // 희망월순이익 (300~700 선택형)
   desiredRegion: z.string().min(1),
   desiredWorkHours: z.string().default(""),
   shiftAvailability: z.enum(["주간만", "야간만", "둘다"]),
-  desiredBrand: z.string().default(""),
+  desiredBrand: z.string().default(""), // 복수 선택 → 콤마 결합
   fitnessLevel: z.coerce.number().int().min(1).max(5),
   initialCapital: z.coerce.number().int().min(0),
+  creditStatus: z.enum(["좋음", "보통", "나쁨", "회생", "파산"]),
+  unavailableTimes: z.string().default(""),
   hasVehicle: z.coerce.boolean().default(false),
+  vehicleTonnage: z.string().default(""),
+  vehicleBodyType: z.string().default(""),
   vehiclePreference: z.string().default(""),
   interestedIn: z.string().default(""),
   questions: z.string().default(""),
@@ -38,7 +42,10 @@ const consultationSchema = z.object({
 export async function submitConsultation(formData: FormData) {
   if (formData.get("consent") !== "on") throw new Error("개인정보 수집·이용 동의가 필요합니다.");
 
-  const data = consultationSchema.parse(Object.fromEntries(formData.entries()));
+  // 희망 브랜드는 복수 선택 → 콤마로 결합 (Object.fromEntries는 마지막 값만 남기므로 별도 처리)
+  const raw = Object.fromEntries(formData.entries());
+  raw.desiredBrand = formData.getAll("desiredBrand").map(String).join(",");
+  const data = consultationSchema.parse(raw);
 
   const consultation = await prisma.consultation.create({
     data: { ...data, status: "작성중", consents: { create: { consentType: "수집이용", policyVersion: CONSENT_POLICY_VERSION } } },
@@ -137,6 +144,7 @@ const listingSchema = z.object({
   slotCount: z.coerce.number().int().min(0),
   pros: z.string().min(1),
   cons: z.string().min(1),
+  introMd: z.string().default(""),
   sunTopAvailable: z.coerce.boolean().default(false),
 });
 

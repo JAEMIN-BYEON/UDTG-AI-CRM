@@ -1,5 +1,6 @@
-// K3: AI 추천 결과 — 추천 3건 카드 + 접수 완료
+// K3: AI 추천 결과 — 7.20 개편: 적합도 점수·세부 항목 제거, 센터 소개서로 대체
 import { notFound } from "next/navigation";
+import ReactMarkdown from "react-markdown";
 import { prisma } from "@/lib/db";
 import { finalizeConsultation } from "@/app/actions";
 import { FinalizeButton } from "./finalize-button";
@@ -30,33 +31,27 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
       <div className="mt-8 space-y-6">
         {consultation.recommendations.map((r) => (
           <div key={r.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            {/* 상단 센터 정보 (유지) */}
             <div className="flex items-start justify-between gap-4">
               <h2 className="text-2xl font-bold">
                 {medal[r.rank - 1]} {r.listing.brand} <span className="text-slate-400">·</span> {r.listing.category}
               </h2>
-              <span className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
-                적합도 {r.score}점
-              </span>
+              {r.listing.sunTopAvailable && (
+                <span className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">선탑 가능</span>
+              )}
             </div>
 
             <p className="mt-4 rounded-xl bg-slate-50 p-4 text-lg leading-relaxed">{r.reasonText}</p>
 
-            <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-base sm:grid-cols-3">
-              <div><dt className="text-sm text-slate-400">근무시간</dt><dd className="font-semibold">{r.listing.shift} {r.listing.workHours}</dd></div>
-              <div><dt className="text-sm text-slate-400">운송료 구조</dt><dd className="font-semibold">{r.listing.payStructure}</dd></div>
-              <div><dt className="text-sm text-slate-400">예상 실수령</dt><dd className="font-semibold">{r.listing.incomeMin}~{r.listing.incomeMax}만원</dd></div>
-              <div><dt className="text-sm text-slate-400">상·하차 강도</dt><dd className="font-semibold">{"●".repeat(r.listing.physicalLoad)}{"○".repeat(5 - r.listing.physicalLoad)} ({r.listing.loadType})</dd></div>
-              <div><dt className="text-sm text-slate-400">차량 조건</dt><dd className="font-semibold">{r.listing.vehicleRequirement}</dd></div>
-              <div><dt className="text-sm text-slate-400">넘버 방식</dt><dd className="font-semibold">{r.listing.numberPlates}</dd></div>
-            </dl>
-
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              <p className="rounded-lg bg-emerald-50 p-3 text-emerald-800"><b>장점</b> — {r.listing.pros}</p>
-              <p className="rounded-lg bg-rose-50 p-3 text-rose-800"><b>유의점</b> — {r.listing.cons}</p>
-            </div>
-
-            {r.listing.sunTopAvailable && (
-              <p className="mt-3 text-sm font-semibold text-blue-600">✓ 선탑(동승 체험) 가능한 물량입니다</p>
+            {/* 세부 항목은 센터 소개서로 대체 (7.20 회의) */}
+            {r.listing.introMd ? (
+              <div className="prose prose-slate mt-5 max-w-none rounded-xl border border-slate-100 p-5 prose-headings:mt-3 prose-headings:mb-2">
+                <ReactMarkdown>{r.listing.introMd}</ReactMarkdown>
+              </div>
+            ) : (
+              <p className="mt-4 text-sm text-slate-400">
+                {r.listing.shift} {r.listing.workHours} · 자세한 조건은 담당자가 상담에서 안내드립니다.
+              </p>
             )}
           </div>
         ))}

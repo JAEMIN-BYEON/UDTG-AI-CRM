@@ -29,6 +29,7 @@ model Listing {
   sunTopAvailable    Boolean  @default(true)
   isActive           Boolean  @default(true)
   slotCount          Int      @default(1) // 모집 가능 대수 — 0이면 추천 제외
+  introMd            String   @default("") // 센터 소개서 (마크다운) — 추천 화면 세부 항목 대체 (7.20 회의)
   deletedAt          DateTime? // 휴지통 (소프트 삭제)
   updatedAt          DateTime @updatedAt
   createdAt          DateTime @default(now())
@@ -63,11 +64,17 @@ model Consultation {
   vehiclePreference String  @default("") // 신차 | 중고차 | 해당없음
 
   // 상담 신청 내용
-  interestedIn   String @default("") // 관심 물량
+  interestedIn   String @default("") // (7.20 폼에서 제거 — 과거 데이터 보존용)
   questions      String @default("") // 궁금한 부분
-  sunTopSchedule String @default("") // 선탑 가능 일정 (희망값만 수집 — 확정은 다우오피스)
-  familyConsent  String @default("") // 가족 동의 여부
-  notes          String @default("") // 특이사항
+  sunTopSchedule String @default("") // 선탑 '불가능한' 일정 (7.20 변경 — 확정은 다우오피스)
+  familyConsent  String @default("") // (7.20 폼에서 제거 — 과거 데이터 보존용)
+  notes          String @default("") // (7.20 폼에서 제거 — 과거 데이터 보존용)
+
+  // 7.20 회의 신규 항목
+  creditStatus     String @default("") // 신용 상태: 좋음|보통|나쁨|회생|파산
+  unavailableTimes String @default("") // 근무 불가 시간 (AI 매칭 참고)
+  vehicleTonnage   String @default("") // 보유 차량 톤수
+  vehicleBodyType  String @default("") // 보유 차량 탑종류 (윙바디/카고/냉탑/내장탑 등)
 
   createdAt   DateTime  @default(now())
   completedAt DateTime?

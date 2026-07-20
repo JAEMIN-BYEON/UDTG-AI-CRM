@@ -77,16 +77,18 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
           <section>
             <h2 className="mb-2 font-bold">👤 고객 정보</h2>
             <div className={row}><span className={dt}>거주지역</span><span>{c.residenceArea}</span></div>
-            <div className={row}><span className={dt}>운전/화물 경력</span><span>{c.drivingYears}년 / {c.cargoYears}년</span></div>
-            <div className={row}><span className={dt}>면허</span><span>{c.license}{c.hasCargoCert && " · 화물자격증 보유"}</span></div>
-            <div className={row}><span className={dt}>차량</span><span>{c.hasVehicle ? "보유" : "미보유"} ({c.vehiclePreference || "-"})</span></div>
+            <div className={row}><span className={dt}>화물 경력</span><span>{c.cargoYears}년</span></div>
+            <div className={row}><span className={dt}>면허</span><span>{c.license}{c.hasCargoCert ? " · 화물자격증 보유" : " · 화물자격증 없음"}</span></div>
+            <div className={row}><span className={dt}>신용 상태</span><span className={["회생", "파산", "나쁨"].includes(c.creditStatus) ? "font-bold text-rose-600" : ""}>{c.creditStatus || "-"}</span></div>
+            <div className={row}><span className={dt}>차량</span><span>{c.hasVehicle ? `보유 (${c.vehicleTonnage} ${c.vehicleBodyType})` : "미보유"} · {c.vehiclePreference || "-"}</span></div>
           </section>
           <section>
             <h2 className="mb-2 font-bold">🎯 희망 조건</h2>
-            <div className={row}><span className={dt}>희망 수입</span><span>월 {c.desiredIncome}만원</span></div>
-            <div className={row}><span className={dt}>지역/시간</span><span>{c.desiredRegion} · {c.shiftAvailability} {c.desiredWorkHours && `(${c.desiredWorkHours})`}</span></div>
+            <div className={row}><span className={dt}>희망 월순이익</span><span>{c.desiredIncome}만원{c.desiredIncome >= 700 ? " 이상" : ""}</span></div>
+            <div className={row}><span className={dt}>지역/시간</span><span>{c.desiredRegion} · {c.shiftAvailability}</span></div>
+            <div className={row}><span className={dt}>근무 불가 시간</span><span>{c.unavailableTimes || "-"}</span></div>
             <div className={row}><span className={dt}>체력/자금</span><span>체력 {c.fitnessLevel}/5 · {c.initialCapital}만원</span></div>
-            <div className={row}><span className={dt}>희망 브랜드</span><span>{c.desiredBrand || "무관"}</span></div>
+            <div className={row}><span className={dt}>희망 브랜드</span><span>{c.desiredBrand ? c.desiredBrand.split(",").join(", ") : "무관"}</span></div>
           </section>
         </div>
 
@@ -115,11 +117,8 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
         <div className="mt-4 grid gap-6 sm:grid-cols-2 print:grid-cols-2">
           <section>
             <h2 className="mb-2 font-bold">💬 고객 요청 사항</h2>
-            <div className={row}><span className={dt}>관심 물량</span><span>{c.interestedIn || "-"}</span></div>
             <div className={row}><span className={dt}>궁금한 부분</span><span className="max-w-[60%] text-right">{c.questions || "-"}</span></div>
-            <div className={row}><span className={dt}>선탑 희망 일정</span><span>{c.sunTopSchedule || "-"} <span className="text-xs text-slate-400">(확정은 다우 캘린더)</span></span></div>
-            <div className={row}><span className={dt}>가족 동의</span><span>{c.familyConsent || "-"}</span></div>
-            <div className={row}><span className={dt}>특이사항</span><span>{c.notes || "-"}</span></div>
+            <div className={row}><span className={dt}>선탑 불가 일정</span><span>{c.sunTopSchedule || "없음"} <span className="text-xs text-slate-400">(확정은 다우 캘린더)</span></span></div>
             <div className={row}><span className={dt}>시청 영상</span><span>{c.videoViews.length ? c.videoViews.map((v) => v.video.title).join(", ") : "없음"}</span></div>
           </section>
           <section>

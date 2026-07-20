@@ -55,6 +55,13 @@ export function ListingForm({ listing }: { listing?: Listing }) {
       </div>
 
       <div><span className={label}>차량 조건 *</span><input name="vehicleRequirement" required defaultValue={listing?.vehicleRequirement} className={field} placeholder="1톤 탑차" /></div>
+
+      <div>
+        <span className={label}>센터 소개서 (마크다운)</span>
+        <textarea name="introMd" rows={8} defaultValue={listing?.introMd} className={field}
+          placeholder={"고객 추천 화면에 표시되는 소개서입니다. 마크다운 형식으로 작성하세요.\n예)\n## 다이소 용인센터\n- 근무시간: 06:00~15:00\n- 예상 순이익: 월 400만원대\n..."} />
+        <p className="mt-1 text-xs text-slate-400">작성하면 추천 화면의 세부 항목 대신 이 소개서가 표시됩니다. (7.20 회의 결정)</p>
+      </div>
       <div><span className={label}>장점 *</span><textarea name="pros" required rows={2} defaultValue={listing?.pros} className={field} /></div>
       <div><span className={label}>단점 *</span><textarea name="cons" required rows={2} defaultValue={listing?.cons} className={field} /></div>
 

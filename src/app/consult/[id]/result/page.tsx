@@ -62,10 +62,18 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
         ))}
       </div>
 
-      <form action={finalizeConsultation.bind(null, consultation.id)} className="mt-10">
-        <FinalizeButton />
-        <p className="mt-3 text-center text-slate-400">완료하시면 담당자에게 전달되어 심층 상담이 진행됩니다.</p>
-      </form>
+      {consultation.status === "추천완료" ? (
+        <form action={finalizeConsultation.bind(null, consultation.id)} className="mt-10">
+          <FinalizeButton />
+          <p className="mt-3 text-center text-slate-400">완료하시면 담당자에게 전달되어 심층 상담이 진행됩니다.</p>
+        </form>
+      ) : (
+        // 이미 접수된 건 — 고객 재접속(뒤로가기)이나 담당자 확인용 열람 시 중복 접수 방지
+        <div className="mt-10 rounded-2xl bg-emerald-50 p-6 text-center">
+          <p className="text-xl font-bold text-emerald-700">✅ 이미 상담 신청이 완료된 건입니다</p>
+          <p className="mt-1 text-sm text-emerald-600">담당자에게 전달되어 있습니다. (현재 상태: {consultation.status})</p>
+        </div>
+      )}
     </main>
   );
 }

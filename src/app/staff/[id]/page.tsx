@@ -28,6 +28,14 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
       <div className="mb-4 flex items-center justify-between print:hidden">
         <Link href="/staff" className="text-sm text-slate-400 hover:text-slate-600">← 대시보드</Link>
         <div className="flex items-center gap-2">
+          <Link
+            href={`/consult/${c.id}/result`}
+            target="_blank"
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50"
+            title="고객이 키오스크에서 본 추천 결과 화면을 그대로 봅니다"
+          >
+            👁 고객 화면 보기
+          </Link>
           <PrintButton />
           {c.status === "접수완료" && (
             <form action={markCounseled.bind(null, c.id)}>

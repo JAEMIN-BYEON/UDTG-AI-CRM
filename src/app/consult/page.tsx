@@ -69,13 +69,13 @@ export default function ConsultPage() {
           setSubmitting(true);
           try {
             await submitConsultation(fd);
+            // 성공(리다이렉트) 시에는 오버레이를 유지 — 결과 페이지 전환까지 공백 없이 이어진다
           } catch (e) {
             // redirect는 Next 내부 처리로 넘기고, 실제 오류만 화면에 표시
             const digest = (e as { digest?: string })?.digest ?? "";
             if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) throw e;
             alert("접수 처리 중 오류가 발생했습니다. 직원에게 문의해 주세요.\n\n" + (e instanceof Error ? e.message : String(e)));
-          } finally {
-            setSubmitting(false);
+            setSubmitting(false); // 오류일 때만 해제
           }
         }}
       >
@@ -208,7 +208,7 @@ export default function ConsultPage() {
         </div>
       </form>
       {/* 화면이 최신 배포인지 확인용 버전 표시 */}
-      <p className="mt-12 text-center text-xs text-slate-300">v0.6.0</p>
+      <p className="mt-12 text-center text-xs text-slate-300">v0.7.0</p>
     </main>
   );
 }

@@ -57,6 +57,11 @@ export default function ConsultPage() {
           setSubmitting(true);
           try {
             await submitConsultation(fd);
+          } catch (e) {
+            // redirect는 Next 내부 처리로 넘기고, 실제 오류만 화면에 표시
+            const digest = (e as { digest?: string })?.digest ?? "";
+            if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) throw e;
+            alert("접수 처리 중 오류가 발생했습니다. 직원에게 문의해 주세요.\n\n" + (e instanceof Error ? e.message : String(e)));
           } finally {
             setSubmitting(false);
           }
@@ -139,8 +144,25 @@ export default function ConsultPage() {
             아래 버튼을 누르면 입력하신 조건으로 <b>AI가 맞춤 물량을 추천</b>해 드립니다.
           </p>
           <button
-            type="submit"
+            type="button"
             disabled={submitting}
+            onClick={(e) => {
+              // 숨겨진 단계에 미입력 필드가 있으면 브라우저가 제출을 소리 없이 막는다
+              // → 전체 단계를 직접 검사해 문제 단계로 이동시키고 안내 말풍선을 띄운다
+              const form = (e.target as HTMLElement).closest("form")!;
+              const sections = Array.from(form.querySelectorAll("section"));
+              for (let i = 0; i < sections.length; i++) {
+                const controls = sections[i].querySelectorAll<HTMLInputElement>("input, textarea");
+                for (const el of controls) {
+                  if (!el.checkValidity()) {
+                    setStep(i);
+                    setTimeout(() => el.reportValidity(), 100);
+                    return;
+                  }
+                }
+              }
+              form.requestSubmit();
+            }}
             className="w-full rounded-2xl bg-blue-600 px-8 py-6 text-2xl font-bold text-white shadow-lg transition hover:bg-blue-700 disabled:opacity-50"
           >
             {submitting ? "AI가 물량을 분석하고 있습니다..." : "AI 추천 받기"}
@@ -173,6 +195,8 @@ export default function ConsultPage() {
           )}
         </div>
       </form>
+      {/* 화면이 최신 배포인지 확인용 버전 표시 */}
+      <p className="mt-12 text-center text-xs text-slate-300">v0.3.0</p>
     </main>
   );
 }

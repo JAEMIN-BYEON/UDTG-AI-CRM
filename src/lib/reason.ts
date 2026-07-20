@@ -43,6 +43,7 @@ export async function generateReasons(c: Consultation, scored: Scored[]): Promis
       장점: s.listing.pros,
       단점: s.listing.cons,
       매칭근거: s.breakdown.map((b) => `${b.label}: ${b.note}`).join(" / "),
+      자금기준미달_상담시협의필요: s.capitalRelaxed,
     }));
 
     const res = await client.chat.completions.create({

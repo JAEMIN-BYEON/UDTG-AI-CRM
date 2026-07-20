@@ -8,30 +8,45 @@ export type Scored = {
   score: number;
   breakdown: ScoreItem[];
   regionRelaxed: boolean;
+  capitalRelaxed: boolean;
 };
 
 const csv = (s: string) => s.split(",").map((v) => v.trim()).filter(Boolean);
 
+// 넘버 방식이 유연한 물량 — 자금 부족 고객도 진입 방안 협의 가능
+// (운영 입력이 자유 텍스트라 "상관없음"/"무관"/"협의" 표현도 인정)
+function rentalPossible(numberPlates: string): boolean {
+  return ["법인임대", "상관없음", "무관", "협의"].some((k) => numberPlates.includes(k));
+}
+
 // ── 1단계: 하드 필터 (설계서 §7.1) ─────────────────────────────
-function hardFilter(c: Consultation, listings: Listing[], relaxRegion: boolean): { listing: Listing; regionRelaxed: boolean }[] {
+function hardFilter(
+  c: Consultation,
+  listings: Listing[],
+  opts: { relaxRegion: boolean; relaxCapital: boolean }
+): { listing: Listing; regionRelaxed: boolean; capitalRelaxed: boolean }[] {
   return listings
     .filter((l) => l.isActive)
     .filter((l) => {
-      // 주/야간 가능 여부
+      // 주/야간 가능 여부 (자금과 달리 상담으로 풀 수 없는 조건 → 항상 하드)
       if (c.shiftAvailability === "주간만" && l.shift === "야간") return false;
       if (c.shiftAvailability === "야간만" && l.shift === "주간") return false;
-      // 초기 자금 (법인임대 넘버 가능 물량은 완화)
-      if (c.initialCapital < l.initialCapitalMin && !csv(l.numberPlates).includes("법인임대")) return false;
       return true;
     })
     .map((l) => {
+      const capitalOk = c.initialCapital >= l.initialCapitalMin || rentalPossible(l.numberPlates);
       const regionMatch = csv(l.region).some(
         (r) => r.includes(c.desiredRegion) || c.desiredRegion.includes(r)
       );
-      return { listing: l, regionMatch };
+      return { listing: l, capitalOk, regionMatch };
     })
-    .filter((x) => relaxRegion || x.regionMatch)
-    .map((x) => ({ listing: x.listing, regionRelaxed: !x.regionMatch }));
+    .filter((x) => opts.relaxCapital || x.capitalOk)
+    .filter((x) => opts.relaxRegion || x.regionMatch)
+    .map((x) => ({
+      listing: x.listing,
+      regionRelaxed: !x.regionMatch,
+      capitalRelaxed: !x.capitalOk || (rentalPossible(x.listing.numberPlates) && c.initialCapital < x.listing.initialCapitalMin),
+    }));
 }
 
 // ── 2단계: 규칙 스코어링 (설계서 §7.2 가중치) ──────────────────
@@ -100,17 +115,21 @@ function scoreOne(c: Consultation, l: Listing): ScoreItem[] {
 }
 
 // ── 추천 실행: 상위 3건 ─────────────────────────────────────────
+// 결과 0건을 최소화하기 위해 단계적으로 필터를 완화한다:
+// 정상 → 지역 완화 → 자금 완화 → 지역+자금 완화 (주/야간만은 끝까지 하드)
 export function recommend(c: Consultation, listings: Listing[]): Scored[] {
-  let candidates = hardFilter(c, listings, false);
-  // 지역 일치 결과가 없으면 지역 필터 완화 (설계서 §7.1 보완)
-  if (candidates.length === 0) candidates = hardFilter(c, listings, true);
+  let candidates = hardFilter(c, listings, { relaxRegion: false, relaxCapital: false });
+  if (candidates.length === 0) candidates = hardFilter(c, listings, { relaxRegion: true, relaxCapital: false });
+  if (candidates.length === 0) candidates = hardFilter(c, listings, { relaxRegion: false, relaxCapital: true });
+  if (candidates.length === 0) candidates = hardFilter(c, listings, { relaxRegion: true, relaxCapital: true });
 
   return candidates
-    .map(({ listing, regionRelaxed }) => {
+    .map(({ listing, regionRelaxed, capitalRelaxed }) => {
       const breakdown = scoreOne(c, listing);
       let score = breakdown.reduce((s, i) => s + i.points, 0);
       if (regionRelaxed) score -= 10; // 인접/타 지역 감점
-      return { listing, score, breakdown, regionRelaxed };
+      if (capitalRelaxed) score -= 10; // 자금 기준 미달 감점 (상담 시 협의 전제)
+      return { listing, score, breakdown, regionRelaxed, capitalRelaxed };
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, 3);
@@ -121,5 +140,8 @@ export function templateReason(c: Consultation, s: Scored): string {
   const top = [...s.breakdown].sort((a, b) => b.points / b.max - a.points / a.max).slice(0, 3);
   const grounds = top.map((i) => i.note).join(", ");
   const region = s.regionRelaxed ? " (희망 지역과 정확히 일치하지 않아 인접 물량으로 안내)" : "";
-  return `${c.name}님의 조건과 비교한 결과, ${grounds} 등의 이유로 ${s.listing.brand} ${s.listing.category} 물량을 추천드립니다${region}. 장점: ${s.listing.pros}. 유의점: ${s.listing.cons}.`;
+  const capital = s.capitalRelaxed
+    ? " 초기 자금 기준에는 다소 미달하나, 넘버 방식·차량 준비 방안은 상담 시 협의 가능합니다."
+    : "";
+  return `${c.name}님의 조건과 비교한 결과, ${grounds} 등의 이유로 ${s.listing.brand} ${s.listing.category} 물량을 추천드립니다${region}. 장점: ${s.listing.pros}. 유의점: ${s.listing.cons}.${capital}`;
 }

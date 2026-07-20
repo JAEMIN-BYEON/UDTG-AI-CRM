@@ -33,7 +33,7 @@ AUTH_SECRET=아무-긴-랜덤-문자열        # 로그인 쿠키 서명 키
 STAFF_PASSCODE=담당자접속코드          # /staff 로그인
 ADMIN_PASSCODE=관리자접속코드          # /admin 로그인 (staff 권한 포함)
 OPENAI_API_KEY=sk-...                 # 선택 — 없으면 템플릿 사유로 동작
-OPENAI_MODEL=gpt-4o-mini              # 선택 — 기본값 gpt-4o-mini
+OPENAI_MODEL=gpt-5.6              # 선택 — 기본값 gpt-5.6
 ```
 
 ## 검증

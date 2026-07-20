@@ -1,0 +1,131 @@
+{
+  "_comment": "화주사 브랜드 테마 컬러 사전. 신규 브랜드는 웹검색으로 공식 HEX를 찾은 뒤 이 파일에 자동 누적된다. main=대표색, dark=어두운 변형(테두리/강조), soft=연한 배경(8~12% 틴트).",
+  "CJ대한통운": {
+    "main": "#E4002B",
+    "dark": "#A0001E",
+    "soft": "#FCE6EA",
+    "en": "CJ Logistics",
+    "logo": "cj.png",
+    "verified": true
+  },
+  "삼성웰스토리": {
+    "main": "#FF5624",
+    "dark": "#C93F14",
+    "soft": "#FFEAE2",
+    "en": "Samsung Welstory",
+    "logo": "samsung_welstory.png",
+    "verified": true
+  },
+  "설빙": {
+    "main": "#33343A",
+    "dark": "#242429",
+    "soft": "#EBEBEB",
+    "en": "Sulbing",
+    "logo": "sulbing.png",
+    "verified": true
+  },
+  "소와나무": {
+    "main": "#C9252B",
+    "dark": "#8D1A1E",
+    "soft": "#FAE9EA",
+    "en": "Sowanamu",
+    "logo": "sowanamu.png",
+    "verified": true
+  },
+  "다이소": {
+    "main": "#E80808",
+    "dark": "#A20606",
+    "soft": "#FDE6E6",
+    "en": "Daiso",
+    "logo": "daiso.png",
+    "verified": true
+  },
+  "CU": {
+    "main": "#6E3183",
+    "dark": "#4D225C",
+    "soft": "#F0EAF3",
+    "en": "CU",
+    "logo": "cu.png",
+    "verified": true
+  },
+  "이마트24": {
+    "main": "#F8B808",
+    "dark": "#AE8106",
+    "soft": "#FEF8E6",
+    "en": "emart24",
+    "logo": "emart24.png",
+    "verified": true
+  },
+  "크린토피아": {
+    "main": "#0848A8",
+    "dark": "#063276",
+    "soft": "#E6EDF6",
+    "en": "Cleantopia",
+    "logo": "cleantopia.png",
+    "verified": true
+  },
+  "세븐일레븐": {
+    "main": "#289848",
+    "dark": "#1C6A32",
+    "soft": "#EAF5ED",
+    "en": "7-ELEVEN",
+    "logo": "7eleven.png",
+    "verified": true
+  },
+  "쿠팡": {
+    "main": "#E89B12",
+    "dark": "#A26C0D",
+    "soft": "#FDF5E7",
+    "en": "Coupang Logistics Services",
+    "logo": "coupang.png",
+    "verified": true
+  },
+  "동원": {
+    "main": "#E80808",
+    "dark": "#A20606",
+    "soft": "#FDE6E6",
+    "en": "Dongwon",
+    "logo": "dongwon.png",
+    "verified": true
+  },
+  "GS25": {
+    "main": "#0868B8",
+    "dark": "#064981",
+    "soft": "#E6F0F8",
+    "en": "GS25",
+    "logo": "gs25.png",
+    "verified": true
+  },
+  "골프존": {
+    "main": "#083888",
+    "dark": "#06275F",
+    "soft": "#E6EBF3",
+    "en": "GOLFZON",
+    "logo": "golfzon.png",
+    "verified": true
+  },
+  "청정원": {
+    "main": "#08B8D8",
+    "dark": "#068197",
+    "soft": "#E6F8FB",
+    "en": "Chung Jung One",
+    "logo": "chungjungone.png",
+    "verified": true
+  },
+  "현대그린푸드": {
+    "main": "#089888",
+    "dark": "#066A5F",
+    "soft": "#E6F5F3",
+    "en": "Hyundai Green Food",
+    "logo": "hyundai_greenfood.png",
+    "verified": true
+  },
+  "SPC": {
+    "main": "#0B57A4",
+    "dark": "#083D73",
+    "soft": "#E7EEF6",
+    "en": "SPC",
+    "logo": "",
+    "verified": false
+  }
+}

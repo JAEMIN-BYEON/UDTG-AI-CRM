@@ -4,7 +4,7 @@ import OpenAI from "openai";
 import type { Consultation } from "@prisma/client";
 import { Scored, templateReason } from "./engine";
 
-const MODEL = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+const MODEL = process.env.OPENAI_MODEL ?? "gpt-5.6";
 
 export type ReasonResult = { listingId: string; reason: string; source: "openai" | "template"; modelId: string };
 

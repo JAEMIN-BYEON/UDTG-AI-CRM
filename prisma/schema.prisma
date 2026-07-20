@@ -127,6 +127,20 @@ model Video {
   views VideoView[]
 }
 
+// 물동량 견적서(센터 소개서) — PPTX 추출→AI 보강→PDF/HTML 렌더 산출물
+model Quote {
+  id        String   @id @default(cuid())
+  brand     String
+  center    String
+  filename  String
+  specJson  String // 24항목 견적 JSON (보강 완료본)
+  html      String
+  pdf       Bytes
+  enriched  Boolean  @default(false) // AI 보강 수행 여부
+  modelId   String   @default("") // 보강에 사용한 모델
+  createdAt DateTime @default(now())
+}
+
 model VideoView {
   id             String    @id @default(cuid())
   consultationId String

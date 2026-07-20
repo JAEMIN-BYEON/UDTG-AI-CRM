@@ -10,6 +10,10 @@ export async function middleware(req: NextRequest) {
   const authorized = needsAdmin ? role === "admin" : role !== null;
 
   if (!authorized) {
+    // API 경로는 리다이렉트 대신 401 JSON
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
@@ -19,5 +23,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/staff/:path*", "/admin/:path*"],
+  matcher: ["/staff/:path*", "/admin/:path*", "/api/quotes/:path*"],
 };

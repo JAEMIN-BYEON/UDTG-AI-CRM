@@ -79,7 +79,7 @@ gcloud run deploy "$SERVICE" \
   --allow-unauthenticated \
   --add-cloudsql-instances "$CONN_NAME" \
   --set-secrets "DATABASE_URL=udtg-database-url:latest,AUTH_SECRET=udtg-auth-secret:latest,STAFF_PASSCODE=udtg-staff-passcode:latest,ADMIN_PASSCODE=udtg-admin-passcode:latest${OPENAI_SECRET_FLAG}" \
-  --set-env-vars "OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}" \
+  --set-env-vars "OPENAI_MODEL=${OPENAI_MODEL:-gpt-5.6}" \
   --min-instances 0 --max-instances 2 --memory 1Gi
 
 echo "▶ 5/5 완료"

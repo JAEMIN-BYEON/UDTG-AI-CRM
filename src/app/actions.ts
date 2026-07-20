@@ -188,3 +188,9 @@ export async function adjustSlot(id: string, delta: number) {
   await prisma.listing.update({ where: { id }, data: { slotCount: Math.max(0, l.slotCount + delta) } });
   revalidatePath("/admin/listings");
 }
+
+// 견적서 삭제 — PDF 원본은 재생성 가능하므로 즉시 영구 삭제
+export async function deleteQuote(id: string) {
+  await prisma.quote.delete({ where: { id } });
+  revalidatePath("/admin/quotes");
+}

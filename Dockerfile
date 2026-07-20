@@ -21,8 +21,15 @@ ENV NODE_ENV=production
 ENV PORT=8080
 # 시간 표시 기준: 한국 시간 (코드에서도 Asia/Seoul 명시하지만 이중 안전장치)
 ENV TZ=Asia/Seoul
-# Prisma CLI(db push)가 libssl을 요구
-RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
+# Prisma CLI(db push)가 libssl을 요구.
+# python3 + weasyprint 계열은 물동량 견적서 파이프라인(services/quote)용 —
+# 한글 렌더에 fonts-noto-cjk 필수 (없으면 PDF 글자 깨짐)
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+      openssl python3 python3-pip \
+      libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libcairo2 libffi8 \
+      fonts-noto-cjk \
+  && rm -rf /var/lib/apt/lists/* \
+  && pip3 install --no-cache-dir --break-system-packages weasyprint python-pptx pillow
 
 COPY --from=build /app/package.json /app/package-lock.json ./
 COPY --from=build /app/node_modules ./node_modules
@@ -32,6 +39,8 @@ COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/src ./src
 COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 COPY --from=build /app/next.config.ts ./next.config.ts
+# 견적서 파이프라인 스크립트·브랜드 자산 (extract_quote.py / build_quote.py 등)
+COPY --from=build /app/services ./services
 
 EXPOSE 8080
 # 기동 시: 스키마 동기화(db push) → 물량 0건이면 샘플 시드 → 서버 시작

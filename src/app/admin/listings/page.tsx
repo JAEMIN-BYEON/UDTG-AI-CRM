@@ -18,6 +18,7 @@ export default async function ListingsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">물량 관리 <span className="text-sm font-normal text-slate-400">(운영본부)</span></h1>
         <div className="flex items-center gap-3">
+          <Link href="/admin/quotes" className="text-sm text-slate-400 hover:text-slate-600">📄 견적서</Link>
           <Link href="/admin/listings/trash" className="text-sm text-slate-400 hover:text-slate-600">🗑 휴지통</Link>
           <Link href="/" className="text-sm text-slate-400 hover:text-slate-600">← 홈</Link>
           <Link href="/admin/listings/new" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white">+ 물량 등록</Link>

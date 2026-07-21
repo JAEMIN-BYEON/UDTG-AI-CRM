@@ -4,13 +4,18 @@ import { prisma } from "@/lib/db";
 import { toggleListing, deleteListing, adjustSlot } from "@/app/actions";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { fmtDate } from "@/lib/dates";
+import { IntroUpload } from "./intro-upload";
 
 export const dynamic = "force-dynamic";
 
 const STALE_DAYS = 30; // 설계서 §15: 30일 초과 미갱신 경고
 
 export default async function ListingsPage() {
-  const listings = await prisma.listing.findMany({ where: { deletedAt: null }, orderBy: [{ isActive: "desc" }, { brand: "asc" }] });
+  const listings = await prisma.listing.findMany({
+    where: { deletedAt: null },
+    orderBy: [{ isActive: "desc" }, { brand: "asc" }],
+    include: { quotes: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true } } },
+  });
   const now = Date.now();
 
   return (
@@ -34,6 +39,7 @@ export default async function ListingsPage() {
               <th className="px-4 py-3">근무</th>
               <th className="px-4 py-3">실수령</th>
               <th className="px-4 py-3">잔여 대수</th>
+              <th className="px-4 py-3">소개서</th>
               <th className="px-4 py-3">최근 갱신</th>
               <th className="px-4 py-3">모집</th>
               <th className="px-4 py-3"></th>
@@ -58,6 +64,14 @@ export default async function ListingsPage() {
                         <button className="h-6 w-6 rounded border border-slate-300 text-slate-500 hover:bg-slate-100">＋</button>
                       </form>
                       {l.slotCount === 0 && <span className="ml-1 rounded bg-rose-100 px-1.5 py-0.5 text-xs font-bold text-rose-600">소진</span>}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {l.quotes.length > 0 && (
+                        <a href={`/api/intro/${l.id}`} target="_blank" className="text-xs font-semibold text-blue-600 hover:underline">보기</a>
+                      )}
+                      <IntroUpload listingId={l.id} hasIntro={l.quotes.length > 0} />
                     </div>
                   </td>
                   <td className="px-4 py-3">

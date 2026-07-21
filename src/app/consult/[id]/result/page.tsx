@@ -1,15 +1,22 @@
 // K3: AI 추천 결과 — 7.20 개편: 적합도 점수·세부 항목 제거, 센터 소개서로 대체
+// 소개서는 PPT→디자인 PDF/HTML 변환본(물량 연결 견적서) 우선, 없으면 마크다운 폴백
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { prisma } from "@/lib/db";
 import { finalizeConsultation } from "@/app/actions";
 import { FinalizeButton } from "./finalize-button";
+import { IntroFrame } from "@/components/IntroFrame";
 
 export default async function ResultPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const consultation = await prisma.consultation.findUnique({
     where: { id },
-    include: { recommendations: { include: { listing: true }, orderBy: { rank: "asc" } } },
+    include: {
+      recommendations: {
+        include: { listing: { include: { quotes: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true } } } } },
+        orderBy: { rank: "asc" },
+      },
+    },
   });
   if (!consultation) notFound();
 
@@ -43,8 +50,12 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
 
             <p className="mt-4 rounded-xl bg-slate-50 p-4 text-lg leading-relaxed">{r.reasonText}</p>
 
-            {/* 세부 항목은 센터 소개서로 대체 (7.20 회의) */}
-            {r.listing.introMd ? (
+            {/* 세부 항목은 센터 소개서로 대체 (7.20 회의) — PPT 변환 소개서 > 마크다운 > 기본 문구 */}
+            {r.listing.quotes.length > 0 ? (
+              <div className="mt-5">
+                <IntroFrame src={`/api/intro/${r.listing.id}`} title={`${r.listing.brand} 센터 소개서`} />
+              </div>
+            ) : r.listing.introMd ? (
               <div className="prose prose-slate mt-5 max-w-none rounded-xl border border-slate-100 p-5 prose-headings:mt-3 prose-headings:mb-2">
                 <ReactMarkdown>{r.listing.introMd}</ReactMarkdown>
               </div>

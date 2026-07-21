@@ -16,6 +16,15 @@ export async function POST(req: NextRequest) {
     const file = form.get("file");
     const specStr = form.get("spec");
 
+    // 물량(센터)에 연결하면 그 센터의 '소개서'가 되어 고객 추천 화면에 표시된다
+    const listingIdRaw = form.get("listingId");
+    let listingId: string | null = null;
+    if (typeof listingIdRaw === "string" && listingIdRaw.trim()) {
+      const listing = await prisma.listing.findUnique({ where: { id: listingIdRaw.trim() } });
+      if (!listing) return NextResponse.json({ error: "연결할 물량을 찾을 수 없습니다." }, { status: 400 });
+      listingId = listing.id;
+    }
+
     if (file instanceof File && file.name) {
       // [1] 표준 PPTX → 결정론 추출
       const dir = await mkdtemp(path.join(tmpdir(), "pptx-"));
@@ -43,6 +52,7 @@ export async function POST(req: NextRequest) {
         pdf: new Uint8Array(pdf),
         enriched,
         modelId: model,
+        listingId,
       },
     });
 

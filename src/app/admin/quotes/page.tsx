@@ -11,7 +11,10 @@ export const dynamic = "force-dynamic";
 export default async function QuotesPage() {
   const quotes = await prisma.quote.findMany({
     orderBy: { createdAt: "desc" },
-    select: { id: true, brand: true, center: true, enriched: true, modelId: true, createdAt: true },
+    select: {
+      id: true, brand: true, center: true, enriched: true, modelId: true, createdAt: true,
+      listing: { select: { brand: true, category: true } },
+    },
   });
 
   return (
@@ -24,7 +27,8 @@ export default async function QuotesPage() {
       </div>
 
       <p className="mt-2 text-sm text-slate-500">
-        화주사 견적서 PPTX(운수대통 표준 양식)를 올리면 브랜드 컬러·로고가 적용된 A4 1페이지 견적서를 생성합니다.
+        화주사 견적서 PPTX(운수대통 표준 양식)를 올리면 브랜드 컬러·로고가 적용된 A4 1페이지 견적서를 생성합니다.<br />
+        <span className="text-slate-400">※ 물량 관리에서 각 물량의 &quot;PPT 업로드&quot;로 올리면 그 센터의 소개서로 연결되어 고객 추천 화면에 표시됩니다.</span>
       </p>
 
       <div className="mt-5">
@@ -44,7 +48,14 @@ export default async function QuotesPage() {
           <tbody className="divide-y divide-slate-100">
             {quotes.map((q) => (
               <tr key={q.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 font-semibold">{q.brand} <span className="font-normal text-slate-400">· {q.center}</span></td>
+                <td className="px-4 py-3 font-semibold">
+                  {q.brand} <span className="font-normal text-slate-400">· {q.center}</span>
+                  {q.listing && (
+                    <span className="ml-2 rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-bold text-emerald-600">
+                      소개서: {q.listing.brand} {q.listing.category}
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-slate-500">{fmtDateTime(q.createdAt)}</td>
                 <td className="px-4 py-3">{q.enriched ? <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-600">{q.modelId}</span> : <span className="text-xs text-slate-400">원본</span>}</td>
                 <td className="px-4 py-3">

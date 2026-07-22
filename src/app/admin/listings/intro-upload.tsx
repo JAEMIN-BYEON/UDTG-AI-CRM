@@ -3,6 +3,7 @@
 // 물량별 센터 소개서 업로드 — PPTX → 디자인 PDF/HTML 변환 후 이 물량에 연결
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { checkPptxFile, uploadErrorMessage } from "@/lib/upload";
 
 export function IntroUpload({ listingId, hasIntro }: { listingId: string; hasIntro: boolean }) {
   const router = useRouter();
@@ -19,6 +20,12 @@ export function IntroUpload({ listingId, hasIntro }: { listingId: string; hasInt
         onChange={async (e) => {
           const f = e.target.files?.[0];
           if (!f) return;
+          const problem = checkPptxFile(f);
+          if (problem) {
+            alert(`❌ ${problem}`);
+            if (inputRef.current) inputRef.current.value = "";
+            return;
+          }
           setBusy(true);
           try {
             const fd = new FormData();
@@ -30,7 +37,7 @@ export function IntroUpload({ listingId, hasIntro }: { listingId: string; hasInt
             alert(`✅ 소개서 등록 완료 (${j.brand} ${j.center})${j.enriched ? " — AI 보강 적용" : ""}`);
             router.refresh();
           } catch (err) {
-            alert(`❌ ${err instanceof Error ? err.message : "변환 실패"}`);
+            alert(`❌ ${uploadErrorMessage(err)}`);
           } finally {
             setBusy(false);
             if (inputRef.current) inputRef.current.value = "";

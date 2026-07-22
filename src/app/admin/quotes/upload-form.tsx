@@ -3,6 +3,7 @@
 // 견적서 생성 폼 — PPTX 업로드 → 추출→AI보강→PDF 생성
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { checkPptxFile, uploadErrorMessage } from "@/lib/upload";
 
 export function QuoteUploadForm() {
   const router = useRouter();
@@ -17,6 +18,8 @@ export function QuoteUploadForm() {
         const fd = new FormData(e.currentTarget as HTMLFormElement);
         const f = fd.get("file");
         if (!(f instanceof File) || !f.name) return setMsg("PPTX 파일을 선택하세요.");
+        const problem = checkPptxFile(f);
+        if (problem) return setMsg(`❌ ${problem}`);
         setBusy(true);
         setMsg(null);
         try {
@@ -26,7 +29,7 @@ export function QuoteUploadForm() {
           setMsg(`✅ ${j.brand} ${j.center} 견적서 생성 완료${j.enriched ? " (AI 보강됨)" : " (AI 미사용 — 원본 그대로)"}`);
           router.refresh();
         } catch (err) {
-          setMsg(`❌ ${err instanceof Error ? err.message : "생성 실패"}`);
+          setMsg(`❌ ${uploadErrorMessage(err)}`);
         } finally {
           setBusy(false);
         }

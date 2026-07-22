@@ -48,8 +48,12 @@ async function main() {
   await page.fill('input[name="sunTopSchedule"]', "화요일 오전 불가");
   await page.click("text=다음 →");
 
-  // K2-4: 제출
+  // K2-4: 제출 — 클릭 즉시 로딩 오버레이가 떠야 한다 (멈춘 화면 오인 방지)
   await page.click("text=AI 추천 받기");
+  await page.waitForSelector("text=AI가 분석하고 있습니다", { timeout: 2000 });
+  await page.waitForSelector("text=초 경과", { timeout: 2000 });
+  console.log("클릭 즉시 로딩 오버레이(진행 바·경과 시간) 표시 ✓");
+  await page.screenshot({ path: `${SHOT_DIR}/2b-loading.png` });
   await page.waitForURL(/\/consult\/.+\/result/, { timeout: 30000 });
 
   // K3: 추천 결과

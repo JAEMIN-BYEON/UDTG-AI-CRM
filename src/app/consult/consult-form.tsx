@@ -81,7 +81,8 @@ export function ConsultForm({ brands }: { brands: string[] }) {
 
       <form
         action={async (fd) => {
-          setSubmitting(true);
+          // 주의: 여기서 setSubmitting을 켜면 React가 action(transition) 종료까지
+          // 화면 갱신을 미뤄 오버레이가 안 보인다 — 버튼 onClick에서 미리 켠다
           try {
             await submitConsultation(fd);
             // 성공(리다이렉트) 시 오버레이 유지 — 결과 페이지 전환까지 공백 없음
@@ -221,6 +222,8 @@ export function ConsultForm({ brands }: { brands: string[] }) {
                   }
                 }
               }
+              // 클릭 즉시(액션 시작 전) 오버레이를 띄운다 — 일반 이벤트라 바로 렌더됨
+              setSubmitting(true);
               form.requestSubmit();
             }}
             className="w-full rounded-2xl bg-blue-600 px-8 py-6 text-2xl font-bold text-white shadow-lg transition hover:bg-blue-700 disabled:opacity-50"
@@ -255,7 +258,7 @@ export function ConsultForm({ brands }: { brands: string[] }) {
           )}
         </div>
       </form>
-      <p className="mt-12 text-center text-xs text-slate-300">v0.11.0</p>
+      <p className="mt-12 text-center text-xs text-slate-300">v0.12.0</p>
     </main>
   );
 }

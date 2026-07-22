@@ -7,6 +7,7 @@ import { PrintButton } from "./print-button";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { fmtFull } from "@/lib/dates";
 import type { ScoreItem } from "@/lib/engine";
+import { IntroFrame } from "@/components/IntroFrame";
 
 export default async function StaffDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -144,6 +145,20 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
             </ul>
           </section>
         </div>
+
+        {/* ── 고객이 본 소개서 — 화면에서도 열람, 인쇄 시 2페이지부터 1장씩 ── */}
+        {c.recommendations
+          .filter((r) => r.listing.quotes.length > 0)
+          .map((r) => (
+            <section key={`intro-${r.id}`} className="mt-8 print:mt-0 print:break-before-page">
+              <h2 className="mb-2 font-bold print:hidden">📄 {r.rank}순위 {r.listing.brand} 소개서 <span className="text-sm font-normal text-slate-400">(고객 열람본 · 인쇄 시 별도 페이지)</span></h2>
+              <IntroFrame
+                src={`/api/intro/${r.listing.id}`}
+                title={`${r.listing.brand} 센터 소개서`}
+                className="print:!h-[272mm] print:rounded-none print:border-0"
+              />
+            </section>
+          ))}
       </div>
     </main>
   );

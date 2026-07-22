@@ -56,14 +56,9 @@ export function ListingForm({ listing }: { listing?: Listing }) {
 
       <div><span className={label}>차량 조건 *</span><input name="vehicleRequirement" required defaultValue={listing?.vehicleRequirement} className={field} placeholder="1톤 탑차" /></div>
 
-      <div>
-        <span className={label}>센터 소개서 (예비용 텍스트)</span>
-        <textarea name="introMd" rows={8} defaultValue={listing?.introMd} className={field}
-          placeholder={"PPT 소개서가 없을 때만 표시되는 예비 소개서입니다. (마크다운 가능)"} />
-        <p className="mt-1 text-xs text-slate-400">
-          정식 소개서는 물량 관리 목록의 &quot;PPT 업로드&quot;로 등록하세요 — PPT를 올리면 디자인된 양식으로 변환되어 고객 추천 화면에 표시됩니다. 이 텍스트는 PPT 소개서가 없을 때의 대체 표시용입니다.
-        </p>
-      </div>
+      <p className="rounded-xl bg-blue-50 p-4 text-sm text-blue-700">
+        📄 센터 소개서는 물량 관리 목록의 <b>&quot;PPT 업로드&quot;</b>로 등록하세요 — PPT를 올리면 디자인된 양식으로 변환되어 고객 추천 화면에 표시됩니다.
+      </p>
       <div><span className={label}>장점 *</span><textarea name="pros" required rows={2} defaultValue={listing?.pros} className={field} /></div>
       <div><span className={label}>단점 *</span><textarea name="cons" required rows={2} defaultValue={listing?.cons} className={field} /></div>
 

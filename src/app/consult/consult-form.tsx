@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { submitConsultation } from "@/app/actions";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { hangulizeInput } from "@/lib/hangul";
 
 const STEPS = ["동의", "기본 정보", "희망 조건", "상담 내용", "확인"] as const;
 
@@ -114,7 +115,7 @@ export function ConsultForm({ brands }: { brands: string[] }) {
         {/* ── Step 1: 기본 정보 ── */}
         <section className={`space-y-5 ${show(1)}`}>
           <h2 className="text-2xl font-bold">기본 정보를 입력해 주세요</h2>
-          <div><span className={label}>성명 *</span><input name="name" required className={field} placeholder="홍길동" /></div>
+          <div><span className={label}>성명 *</span><input name="name" required onInput={hangulizeInput} className={field} placeholder="홍길동" /></div>
           <div><span className={label}>연락처 *</span><input name="phone" required type="tel" inputMode="tel" className={field} placeholder="010-0000-0000" /></div>
           <div>
             <span className={label}>거주지역 *</span>
@@ -138,11 +139,11 @@ export function ConsultForm({ brands }: { brands: string[] }) {
             <span className={label}>희망 월순이익 *</span>
             <Radio name="desiredIncome" options={INCOME_OPTIONS} suffix={(o) => (o === "700" ? "700만원 이상" : `${o}만원`)} />
           </div>
-          <div><span className={label}>희망 근무지역 *</span><input name="desiredRegion" required className={field} placeholder="예: 용인" /></div>
+          <div><span className={label}>희망 근무지역 *</span><input name="desiredRegion" required onInput={hangulizeInput} className={field} placeholder="예: 용인" /></div>
           <div><span className={label}>주간 / 야간 가능 여부 *</span><Radio name="shiftAvailability" options={["주간만", "야간만", "둘다"]} /></div>
           <div>
             <span className={label}>근무가 어려운 시간 (선택)</span>
-            <input name="unavailableTimes" className={field} placeholder="예: 새벽 4시 이전 출근 어려움" />
+            <input name="unavailableTimes" onInput={hangulizeInput} className={field} placeholder="예: 새벽 4시 이전 출근 어려움" />
           </div>
           <div>
             <span className={label}>희망 브랜드 (복수 선택 가능)</span>
@@ -189,10 +190,10 @@ export function ConsultForm({ brands }: { brands: string[] }) {
         {/* ── Step 3: 상담 내용 ── */}
         <section className={`space-y-5 ${show(3)}`}>
           <h2 className="text-2xl font-bold">상담받고 싶은 내용을 알려주세요</h2>
-          <div><span className={label}>궁금한 부분</span><textarea name="questions" rows={3} className={field} placeholder="예: 실수령액이 얼마나 되는지 궁금합니다" /></div>
+          <div><span className={label}>궁금한 부분</span><textarea name="questions" rows={3} onInput={hangulizeInput} className={field} placeholder="예: 실수령액이 얼마나 되는지 궁금합니다" /></div>
           <div>
             <span className={label}>선탑(동승 체험)이 불가능한 일정</span>
-            <input name="sunTopSchedule" className={field} placeholder="예: 화요일 오전, 주말 불가" />
+            <input name="sunTopSchedule" onInput={hangulizeInput} className={field} placeholder="예: 화요일 오전, 주말 불가" />
           </div>
         </section>
 
@@ -254,7 +255,7 @@ export function ConsultForm({ brands }: { brands: string[] }) {
           )}
         </div>
       </form>
-      <p className="mt-12 text-center text-xs text-slate-300">v0.10.0</p>
+      <p className="mt-12 text-center text-xs text-slate-300">v0.11.0</p>
     </main>
   );
 }

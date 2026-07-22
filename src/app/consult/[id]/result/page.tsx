@@ -1,22 +1,14 @@
-// K3: AI 추천 결과 — 7.20 개편: 적합도 점수·세부 항목 제거, 센터 소개서로 대체
-// 소개서는 PPT→디자인 PDF/HTML 변환본(물량 연결 견적서) 우선, 없으면 마크다운 폴백
+// K3: AI 추천 결과 — 추천 물량·사유 요약 → 소개서 학습 페이지(intro)로 이동
+// 소개서를 모두 확인해야 상담 신청 가능 (학습 후 상담 → 상담 시간 단축)
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import ReactMarkdown from "react-markdown";
 import { prisma } from "@/lib/db";
-import { finalizeConsultation } from "@/app/actions";
-import { FinalizeButton } from "./finalize-button";
-import { IntroFrame } from "@/components/IntroFrame";
 
 export default async function ResultPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const consultation = await prisma.consultation.findUnique({
     where: { id },
-    include: {
-      recommendations: {
-        include: { listing: { include: { quotes: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true } } } } },
-        orderBy: { rank: "asc" },
-      },
-    },
+    include: { recommendations: { include: { listing: true }, orderBy: { rank: "asc" } } },
   });
   if (!consultation) notFound();
 
@@ -38,7 +30,6 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
       <div className="mt-8 space-y-6">
         {consultation.recommendations.map((r) => (
           <div key={r.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            {/* 상단 센터 정보 (유지) */}
             <div className="flex items-start justify-between gap-4">
               <h2 className="text-2xl font-bold">
                 {medal[r.rank - 1]} {r.listing.brand} <span className="text-slate-400">·</span> {r.listing.category}
@@ -47,32 +38,23 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
                 <span className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">선탑 가능</span>
               )}
             </div>
-
             <p className="mt-4 rounded-xl bg-slate-50 p-4 text-lg leading-relaxed">{r.reasonText}</p>
-
-            {/* 세부 항목은 센터 소개서로 대체 (7.20 회의) — PPT 변환 소개서 > 마크다운 > 기본 문구 */}
-            {r.listing.quotes.length > 0 ? (
-              <div className="mt-5">
-                <IntroFrame src={`/api/intro/${r.listing.id}`} title={`${r.listing.brand} 센터 소개서`} />
-              </div>
-            ) : r.listing.introMd ? (
-              <div className="prose prose-slate mt-5 max-w-none rounded-xl border border-slate-100 p-5 prose-headings:mt-3 prose-headings:mb-2">
-                <ReactMarkdown>{r.listing.introMd}</ReactMarkdown>
-              </div>
-            ) : (
-              <p className="mt-4 text-sm text-slate-400">
-                {r.listing.shift} {r.listing.workHours} · 자세한 조건은 담당자가 상담에서 안내드립니다.
-              </p>
-            )}
           </div>
         ))}
       </div>
 
       {consultation.status === "추천완료" ? (
-        <form action={finalizeConsultation.bind(null, consultation.id)} className="mt-10">
-          <FinalizeButton />
-          <p className="mt-3 text-center text-slate-400">완료하시면 담당자에게 전달되어 심층 상담이 진행됩니다.</p>
-        </form>
+        <div className="mt-10">
+          <Link
+            href={`/consult/${consultation.id}/intro`}
+            className="block w-full rounded-2xl bg-blue-600 px-8 py-6 text-center text-2xl font-bold text-white shadow-lg transition hover:bg-blue-700"
+          >
+            📄 센터 소개서 확인하기 →
+          </Link>
+          <p className="mt-3 text-center text-slate-400">
+            추천 물량의 소개서를 모두 확인하신 후 상담 신청을 하실 수 있습니다.
+          </p>
+        </div>
       ) : (
         // 이미 접수된 건 — 고객 재접속(뒤로가기)이나 담당자 확인용 열람 시 중복 접수 방지
         <div className="mt-10 rounded-2xl bg-emerald-50 p-6 text-center">

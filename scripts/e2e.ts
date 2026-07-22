@@ -57,6 +57,19 @@ async function main() {
   console.log("추천 1순위 카드:", firstCard?.trim().slice(0, 60));
   await page.screenshot({ path: `${SHOT_DIR}/3-result.png`, fullPage: true });
 
+  // K3-2: 소개서 학습 — 모든 소개서를 넘겨봐야 신청 버튼이 나타난다
+  await page.click("text=센터 소개서 확인하기");
+  await page.waitForURL(/\/intro/, { timeout: 15000 });
+  await page.waitForSelector("text=소개서 확인");
+  for (let i = 0; i < 5; i++) {
+    if (await page.locator("text=이 내용으로 상담 신청 완료").isVisible()) break;
+    await page.click("text=다음 소개서 →");
+    await page.waitForTimeout(400);
+  }
+  await page.waitForSelector("text=이 내용으로 상담 신청 완료", { timeout: 5000 });
+  console.log("소개서 학습 완료 → 신청 버튼 노출 ✓");
+  await page.screenshot({ path: `${SHOT_DIR}/3b-intro.png`, fullPage: true });
+
   // 접수 완료
   await page.click("text=이 내용으로 상담 신청 완료");
   await page.waitForURL(/\/done/, { timeout: 15000 });

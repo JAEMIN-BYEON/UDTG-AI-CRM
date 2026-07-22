@@ -144,7 +144,6 @@ const listingSchema = z.object({
   slotCount: z.coerce.number().int().min(0),
   pros: z.string().min(1),
   cons: z.string().min(1),
-  introMd: z.string().default(""),
   sunTopAvailable: z.coerce.boolean().default(false),
 });
 

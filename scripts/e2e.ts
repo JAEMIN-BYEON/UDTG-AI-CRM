@@ -114,8 +114,8 @@ async function main() {
   await page.locator("button:has-text('복구')").first().click();
   await page.waitForTimeout(2000);
   await page.goto(`${BASE}/staff`);
-  await page.waitForSelector("text=김*수"); // 목록은 이름 마스킹 (7.20 회의)
-  console.log("휴지통 복구 ✓ (목록 이름 마스킹 확인)");
+  await page.waitForSelector("text=김운수"); // 목록 이름 마스킹 해제 (7.22 요청)
+  console.log("휴지통 복구 ✓ (목록 이름 표시 확인)");
 
   await browser.close();
   console.log("\nE2E 통과");

@@ -13,7 +13,10 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
   const c = await prisma.consultation.findUnique({
     where: { id },
     include: {
-      recommendations: { include: { listing: true }, orderBy: { rank: "asc" } },
+      recommendations: {
+        include: { listing: { include: { quotes: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true } } } } },
+        orderBy: { rank: "asc" },
+      },
       consents: true,
       videoViews: { include: { video: true } },
     },
@@ -101,6 +104,17 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
                 <div className="flex justify-between">
                   <b>{r.rank}순위 · {r.listing.brand} {r.listing.category}</b>
                   <span className="text-sm text-slate-500">적합도 {r.score}점 · 사유: {r.reasonSource === "openai" ? `AI(${r.modelId})` : "규칙 기반"}</span>
+                </div>
+                {/* 고객이 소개서 학습 단계에서 본 것과 동일한 소개서 (정보 비대칭 방지) */}
+                <div className="mt-2 flex items-center gap-3 print:hidden">
+                  {r.listing.quotes.length > 0 ? (
+                    <>
+                      <a href={`/api/intro/${r.listing.id}`} target="_blank" className="text-sm font-bold text-blue-600 hover:underline">📄 고객이 본 소개서 보기</a>
+                      <a href={`/api/intro/${r.listing.id}?format=pdf`} target="_blank" className="text-sm font-semibold text-slate-400 hover:text-slate-600">PDF</a>
+                    </>
+                  ) : (
+                    <span className="text-xs text-slate-400">소개서 미등록 물량 — 고객에게는 추천 사유 카드만 표시됨</span>
+                  )}
                 </div>
                 <p className="mt-2 text-sm leading-relaxed">{r.reasonText}</p>
                 <p className="mt-2 text-xs text-slate-400">

@@ -6,14 +6,9 @@ import { useState } from "react";
 import { submitConsultation } from "@/app/actions";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { hangulizeInput } from "@/lib/hangul";
+import { REGIONS } from "@/lib/regions";
 
 const STEPS = ["동의", "기본 정보", "희망 조건", "상담 내용", "확인"] as const;
-
-// 거주지역 — 광역지자체 선택형 (경기도는 남부/북부 분리, 7.20 회의)
-const REGIONS = [
-  "서울", "경기남부", "경기북부", "인천", "강원", "대전", "세종", "충남", "충북",
-  "광주", "전남", "전북", "대구", "경북", "부산", "울산", "경남", "제주",
-];
 
 const INCOME_OPTIONS = ["300", "400", "500", "600", "700"]; // 희망월순이익 (만원, 700은 이상)
 const TONNAGE_OPTIONS = ["1톤", "1.4톤", "2.5톤", "3.5톤", "5톤", "8톤", "11톤 이상", "기타"];
@@ -118,15 +113,17 @@ export function ConsultForm({ brands }: { brands: string[] }) {
           <h2 className="text-2xl font-bold">기본 정보를 입력해 주세요</h2>
           <div><span className={label}>성명 *</span><input name="name" required onInput={hangulizeInput} className={field} placeholder="홍길동" /></div>
           <div><span className={label}>연락처 *</span><input name="phone" required type="tel" inputMode="tel" className={field} placeholder="010-0000-0000" /></div>
+          {/* 7.27: 거주지역은 텍스트 입력 (시·군·구 단위로 자세히) */}
           <div>
             <span className={label}>거주지역 *</span>
-            <Radio name="residenceArea" options={REGIONS} />
+            <input name="residenceArea" required onInput={hangulizeInput} className={field} placeholder="예: 용인시 처인구" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div><span className={label}>연령 *</span><input name="age" required inputMode="numeric" onInput={numericOnly} maxLength={2} className={field} placeholder="52" /></div>
             <div><span className={label}>화물 경력 (년)</span><input name="cargoYears" inputMode="numeric" onInput={numericOnly} defaultValue={0} className={field} /></div>
           </div>
-          <div><span className={label}>보유 면허 *</span><Radio name="license" options={["1종 보통", "1종 대형", "2종 보통"]} /></div>
+          {/* 7.27: 2종 보통은 수동/자동 분류 */}
+          <div><span className={label}>보유 면허 *</span><Radio name="license" options={["1종 보통", "1종 대형", "2종 보통(수동)", "2종 보통(자동)"]} /></div>
           <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-300 bg-white p-4">
             <input type="checkbox" name="hasCargoCert" className="h-5 w-5" />
             <span className="text-lg">화물운송종사자격증이 있습니다 <span className="text-sm text-slate-400">(없어도 상담 가능합니다)</span></span>
@@ -140,7 +137,11 @@ export function ConsultForm({ brands }: { brands: string[] }) {
             <span className={label}>희망 월순이익 *</span>
             <Radio name="desiredIncome" options={INCOME_OPTIONS} suffix={(o) => (o === "700" ? "700만원 이상" : `${o}만원`)} />
           </div>
-          <div><span className={label}>희망 근무지역 *</span><input name="desiredRegion" required onInput={hangulizeInput} className={field} placeholder="예: 용인" /></div>
+          {/* 7.27: 희망 근무지역은 광역 선택형 (경기도는 남부/북부 분리) */}
+          <div>
+            <span className={label}>희망 근무지역 *</span>
+            <Radio name="desiredRegion" options={[...REGIONS]} />
+          </div>
           <div><span className={label}>주간 / 야간 가능 여부 *</span><Radio name="shiftAvailability" options={["주간만", "야간만", "둘다"]} /></div>
           <div>
             <span className={label}>근무가 어려운 시간 (선택)</span>
@@ -258,7 +259,7 @@ export function ConsultForm({ brands }: { brands: string[] }) {
           )}
         </div>
       </form>
-      <p className="mt-12 text-center text-xs text-slate-300">v0.18.0</p>
+      <p className="mt-12 text-center text-xs text-slate-300">v0.19.0</p>
     </main>
   );
 }

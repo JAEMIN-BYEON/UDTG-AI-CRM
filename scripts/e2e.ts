@@ -26,7 +26,7 @@ async function main() {
   // K2-1: 기본 정보 (7.20 개편안)
   await page.fill('input[name="name"]', "김운수");
   await page.fill('input[name="phone"]', "010-1234-5678");
-  await page.click('label:has(input[name="residenceArea"][value="경기남부"])');
+  await page.fill('input[name="residenceArea"]', "용인시 처인구"); // 7.27: 텍스트 입력 전환
   await page.fill('input[name="age"]', "52");
   await page.fill('input[name="cargoYears"]', "0");
   await page.click('label:has(input[name="license"][value="1종 보통"])');
@@ -34,7 +34,7 @@ async function main() {
 
   // K2-2: 희망 조건 (희망월순이익 선택형 + 신용상태)
   await page.click('label:has(input[name="desiredIncome"][value="400"])');
-  await page.fill('input[name="desiredRegion"]', "용인");
+  await page.click('label:has(input[name="desiredRegion"][value="경기남부"])'); // 7.27: 선택형 전환
   await page.click('label:has(input[name="shiftAvailability"][value="주간만"])');
   await page.fill('input[name="unavailableTimes"]', "새벽 4시 이전 어려움");
   await page.click('label:has(input[name="fitnessLevel"][value="3"])');

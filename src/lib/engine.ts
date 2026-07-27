@@ -1,6 +1,7 @@
 // 추천 엔진 (설계서 §7)
 // 원칙: 후보 선정은 규칙이, 설명은 LLM이. LLM은 새로운 물량을 만들지 않는다.
 import type { Listing, Consultation } from "@prisma/client";
+import { regionMatches } from "@/lib/regions";
 
 export type ScoreItem = { label: string; points: number; max: number; note: string };
 export type Scored = {
@@ -36,9 +37,8 @@ function hardFilter(
     })
     .map((l) => {
       const capitalOk = c.initialCapital >= l.initialCapitalMin || rentalPossible(l.numberPlates);
-      const regionMatch = csv(l.region).some(
-        (r) => r.includes(c.desiredRegion) || c.desiredRegion.includes(r)
-      );
+      // 광역 선택형(경기남부 등) ↔ 시·군 자유 텍스트 매칭 (키워드 확장, src/lib/regions.ts)
+      const regionMatch = regionMatches(c.desiredRegion, l.region);
       return { listing: l, capitalOk, regionMatch };
     })
     .filter((x) => opts.relaxCapital || x.capitalOk)

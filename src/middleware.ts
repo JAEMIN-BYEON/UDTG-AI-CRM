@@ -6,7 +6,7 @@ export async function middleware(req: NextRequest) {
   const role = await verifyToken(req.cookies.get(COOKIE_NAME)?.value);
   const { pathname } = req.nextUrl;
 
-  const needsAdmin = pathname.startsWith("/admin");
+  const needsAdmin = pathname.startsWith("/admin") || pathname.startsWith("/api/listings");
   const authorized = needsAdmin ? role === "admin" : role !== null;
 
   if (!authorized) {
@@ -23,5 +23,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/staff/:path*", "/admin/:path*", "/api/quotes/:path*"],
+  matcher: ["/staff/:path*", "/admin/:path*", "/api/quotes/:path*", "/api/listings/:path*"],
 };

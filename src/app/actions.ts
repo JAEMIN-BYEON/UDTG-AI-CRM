@@ -129,28 +129,31 @@ export async function purgeConsultation(consultationId: string) {
 // ── 물량 관리 (운영본부, S3) ──────────────────────────────────
 const listingSchema = z.object({
   brand: z.string().min(1),
-  category: z.enum(["상온배송", "저온배송", "간선", "식자재"]),
+  category: z.string().min(1), // CSV 가져오기 이후 자유 분류 (상온/저온/식자재/잡화 등)
+  center: z.string().default(""),
   region: z.string().min(1),
-  workHours: z.string().min(1),
+  workHours: z.string().default(""),
   shift: z.enum(["주간", "야간", "격일"]),
   payStructure: z.enum(["완제", "무제", "매출제"]),
   incomeMin: z.coerce.number().int(),
   incomeMax: z.coerce.number().int(),
   physicalLoad: z.coerce.number().int().min(1).max(5),
-  loadType: z.string().min(1),
+  loadType: z.string().default(""),
   numberPlates: z.string().min(1),
   vehicleRequirement: z.string().min(1),
   initialCapitalMin: z.coerce.number().int(),
   slotCount: z.coerce.number().int().min(0),
-  pros: z.string().min(1),
-  cons: z.string().min(1),
+  pros: z.string().default(""),
+  cons: z.string().default(""),
   sunTopAvailable: z.coerce.boolean().default(false),
+  internalMemo: z.string().default(""),
 });
 
 export async function saveListing(formData: FormData) {
   const id = formData.get("id") as string | null;
   const data = listingSchema.parse(Object.fromEntries(formData.entries()));
-  if (id) await prisma.listing.update({ where: { id }, data });
+  // 관리자가 직접 저장하면 검수 완료로 간주 — 확인 필요 표시 해제
+  if (id) await prisma.listing.update({ where: { id }, data: { ...data, reviewNote: "" } });
   else await prisma.listing.create({ data });
   revalidatePath("/admin/listings");
   redirect("/admin/listings");

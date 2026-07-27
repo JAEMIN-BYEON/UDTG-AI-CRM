@@ -1,0 +1,61 @@
+// 물량 CSV 가져오기 [2/2] 반영 — 미리보기에서 확인한 계획을 실제 등록/갱신
+// 정책: 신규는 비활성으로 생성(관리자 확인 후 활성화), 기존(externalId 일치)은 잔여 대수·내부메모만 갱신
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import type { ImportPlan } from "@/lib/importListings";
+
+export const maxDuration = 120;
+
+export async function POST(req: NextRequest) {
+  try {
+    const { plans } = (await req.json()) as { plans: ImportPlan[] };
+    if (!Array.isArray(plans) || plans.length === 0) {
+      return NextResponse.json({ error: "반영할 계획이 없습니다." }, { status: 400 });
+    }
+
+    let created = 0;
+    let updated = 0;
+    for (const p of plans) {
+      const existing = await prisma.listing.findUnique({ where: { externalId: p.externalId } });
+      if (existing) {
+        await prisma.listing.update({
+          where: { externalId: p.externalId },
+          data: { slotCount: p.slotCount, internalMemo: p.internalMemo, deletedAt: null },
+        });
+        updated++;
+      } else {
+        await prisma.listing.create({
+          data: {
+            brand: p.brand,
+            category: p.category,
+            region: p.region,
+            workHours: p.workHours,
+            shift: p.shift,
+            payStructure: p.payStructure,
+            incomeMin: p.incomeMin,
+            incomeMax: p.incomeMax,
+            physicalLoad: p.physicalLoad,
+            loadType: p.loadType,
+            numberPlates: p.numberPlates,
+            vehicleRequirement: p.vehicleRequirement,
+            initialCapitalMin: 0,
+            pros: p.pros,
+            cons: p.cons,
+            sunTopAvailable: true,
+            isActive: false, // 관리자 확인 후 활성화 (7.27 정책)
+            slotCount: p.slotCount,
+            center: p.center,
+            externalId: p.externalId,
+            internalMemo: p.internalMemo,
+            reviewNote: p.reviewNote,
+          },
+        });
+        created++;
+      }
+    }
+    return NextResponse.json({ created, updated });
+  } catch (e) {
+    console.error("CSV 반영 실패:", e);
+    return NextResponse.json({ error: e instanceof Error ? e.message : "반영 실패" }, { status: 500 });
+  }
+}

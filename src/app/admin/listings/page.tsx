@@ -23,6 +23,7 @@ export default async function ListingsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">물량 관리 <span className="text-sm font-normal text-slate-400">(운영본부)</span></h1>
         <div className="flex items-center gap-3">
+          <Link href="/admin/listings/import" className="text-sm text-slate-400 hover:text-slate-600">⬆ CSV 가져오기</Link>
           <Link href="/admin/quotes" className="text-sm text-slate-400 hover:text-slate-600">📄 견적서</Link>
           <Link href="/admin/listings/trash" className="text-sm text-slate-400 hover:text-slate-600">🗑 휴지통</Link>
           <Link href="/" className="text-sm text-slate-400 hover:text-slate-600">← 홈</Link>
@@ -50,7 +51,10 @@ export default async function ListingsPage() {
               const staleDays = Math.floor((now - l.updatedAt.getTime()) / 86400000);
               return (
                 <tr key={l.id} className={l.isActive ? "hover:bg-slate-50" : "bg-slate-50 text-slate-400"}>
-                  <td className="px-4 py-3 font-semibold">{l.brand} <span className="font-normal text-slate-400">· {l.category}</span></td>
+                  <td className="px-4 py-3 font-semibold">
+                    {l.brand} <span className="font-normal text-slate-400">· {l.center ? `${l.center} · ` : ""}{l.category}</span>
+                    {l.reviewNote && <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-bold text-amber-700" title={l.reviewNote}>검수 필요</span>}
+                  </td>
                   <td className="px-4 py-3">{l.region}</td>
                   <td className="px-4 py-3">{l.shift} {l.workHours}</td>
                   <td className="px-4 py-3">{l.incomeMin}~{l.incomeMax}만원</td>

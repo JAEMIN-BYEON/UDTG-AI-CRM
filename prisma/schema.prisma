@@ -31,7 +31,9 @@ model Listing {
   slotCount          Int      @default(1) // 모집 가능 대수 — 0이면 추천 제외
   introMd            String   @default("") // (사용 중지 — PPT 소개서로 대체)
   center             String   @default("") // 센터 위치 (예: 남사, 안성, 부산 강서구)
-  externalId         String?  @unique // 다우 Work 물량 ID — CSV 재업로드 시 동기화 키
+  externalId         String? // 다우 Work 물량 ID — CSV 재업로드 시 동기화 키
+  // 주의: @unique 금지 — 운영 기동 시 prisma db push가 비대화형 확인을 요구해 배포가 실패한다.
+  //       유일성은 가져오기 로직(externalId 조회 후 생성/갱신)에서 보장.
   internalMemo       String   @default("") // 내부 참고 (센터 담당자·메모 등, 고객 미노출)
   reviewNote         String   @default("") // CSV 가져오기 후 보완 필요 항목 안내
   deletedAt          DateTime? // 휴지통 (소프트 삭제)
@@ -40,6 +42,8 @@ model Listing {
 
   recommendations Recommendation[]
   quotes          Quote[] // 센터 소개서 (PPT→PDF 변환본) — 최신 1건이 고객 화면에 표시
+
+  @@index([externalId])
 }
 
 // 상담 세션 — 고객 1회 방문 = 1건 (설계서 §6.2)

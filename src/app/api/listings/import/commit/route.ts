@@ -16,10 +16,10 @@ export async function POST(req: NextRequest) {
     let created = 0;
     let updated = 0;
     for (const p of plans) {
-      const existing = await prisma.listing.findUnique({ where: { externalId: p.externalId } });
+      const existing = await prisma.listing.findFirst({ where: { externalId: p.externalId } });
       if (existing) {
         await prisma.listing.update({
-          where: { externalId: p.externalId },
+          where: { id: existing.id },
           data: { slotCount: p.slotCount, internalMemo: p.internalMemo, deletedAt: null },
         });
         updated++;

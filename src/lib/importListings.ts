@@ -2,6 +2,7 @@
 // 정책(7.27 확정): 모든 신규 물량은 비활성으로 등록(관리자 확인 후 활성화),
 // 상태 빈 행은 잔여 0대로 유지 등록, 판매금액 컬럼은 저장·전송하지 않는다.
 import { parse } from "csv-parse/sync";
+import * as XLSX from "xlsx";
 import OpenAI from "openai";
 
 const MODEL = process.env.OPENAI_MODEL ?? "gpt-5.6";
@@ -50,31 +51,49 @@ export type ImportPlan = {
   enriched: boolean; // AI 구조화 적용 여부
 };
 
-const header = (h: string) => h.replace(/\s+/g, "").replace(/^\*/, "");
+// 헤더 정규화 — BOM·따옴표·공백·선행 * 제거 ("*ID", "브랜드 " 등 변형 흡수)
+const header = (h: string) => h.replace(/[﻿"]/g, "").replace(/\s+/g, "").replace(/^\*/, "");
+
+function mapRecord(r: Record<string, unknown>): CsvRow {
+  const g = (k: string) => String(r[k] ?? "").trim();
+  return {
+    externalId: g("ID").replace(/"/g, "").trim(),
+    status: g("상태"),
+    brand: g("브랜드"),
+    center: g("센터위치"),
+    trait: g("특성"),
+    tonnage: g("톤수"),
+    productType: g("상품분류"),
+    centerContact: g("센터담당자"),
+    loadPlace: g("상차지"),
+    dropPlace: g("하차지"),
+    workDays: g("운행일수"),
+    entryTime: g("입차시간"),
+    loadDuration: g("상차평균소요시간"),
+    deliveryTime: g("평균배송시간/배송종료시간"),
+    storeCount: g("점포수"),
+    returns: g("반품여부"),
+    memo: g("메모"),
+  };
+}
 
 export function parseCsv(text: string): CsvRow[] {
   const records = parse(text, { columns: (h: string[]) => h.map(header), skip_empty_lines: true, bom: true, relax_column_count: true }) as Record<string, string>[];
-  return records
-    .map((r) => ({
-      externalId: (r["ID"] ?? "").replace(/"/g, "").trim(),
-      status: (r["상태"] ?? "").trim(),
-      brand: (r["브랜드"] ?? "").trim(),
-      center: (r["센터위치"] ?? "").trim(),
-      trait: (r["특성"] ?? "").trim(),
-      tonnage: (r["톤수"] ?? "").trim(),
-      productType: (r["상품분류"] ?? "").trim(),
-      centerContact: (r["센터담당자"] ?? "").trim(),
-      loadPlace: (r["상차지"] ?? "").trim(),
-      dropPlace: (r["하차지"] ?? "").trim(),
-      workDays: (r["운행일수"] ?? "").trim(),
-      entryTime: (r["입차시간"] ?? "").trim(),
-      loadDuration: (r["상차평균소요시간"] ?? "").trim(),
-      deliveryTime: (r["평균배송시간/배송종료시간"] ?? "").trim(),
-      storeCount: (r["점포수"] ?? "").trim(),
-      returns: (r["반품여부"] ?? "").trim(),
-      memo: (r["메모"] ?? "").trim(),
-    }))
-    .filter((r) => r.externalId && r.brand);
+  return records.map(mapRecord).filter((r) => r.externalId && r.brand);
+}
+
+// 동일 양식의 엑셀(.xlsx) — 첫 시트를 CSV와 같은 규칙으로 해석
+export function parseXlsx(buf: Buffer): CsvRow[] {
+  const wb = XLSX.read(buf, { type: "buffer" });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  if (!sheet) return [];
+  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "", raw: false });
+  const normalized = rows.map((r) => {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(r)) out[header(k)] = v;
+    return out;
+  });
+  return normalized.map(mapRecord).filter((r) => r.externalId && r.brand);
 }
 
 // 상태 → 잔여 대수 (핵심 매핑, 7.27 확정)

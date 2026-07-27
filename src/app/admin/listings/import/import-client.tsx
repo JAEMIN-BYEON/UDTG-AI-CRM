@@ -21,7 +21,7 @@ export function ImportClient() {
           e.preventDefault();
           const fd = new FormData(e.currentTarget as HTMLFormElement);
           const f = fd.get("file");
-          if (!(f instanceof File) || !f.name) return setMsg("CSV 파일을 선택하세요.");
+          if (!(f instanceof File) || !f.name) return setMsg("CSV 또는 엑셀(.xlsx) 파일을 선택하세요.");
           setBusy("AI가 물량 데이터를 구조화하고 있습니다... (최대 2분)");
           setMsg(null);
           setPreview(null);
@@ -37,7 +37,7 @@ export function ImportClient() {
           }
         }}
       >
-        <input type="file" name="file" accept=".csv" className="text-sm" />
+        <input type="file" name="file" accept=".csv,.xlsx" className="text-sm" />
         <button disabled={!!busy} className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">
           {busy ?? "미리보기 생성"}
         </button>
@@ -82,7 +82,7 @@ export function ImportClient() {
 
           {preview.missing.length > 0 && (
             <div className="mt-3 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
-              ⚠ 이번 CSV에 없는 기존 연동 물량 {preview.missing.length}건 — 다우에서 삭제된 것일 수 있으니 확인 후 필요 시 모집 중지하세요:{" "}
+              ⚠ 이번 파일에 없는 기존 연동 물량 {preview.missing.length}건 — 다우에서 삭제된 것일 수 있으니 확인 후 필요 시 모집 중지하세요:{" "}
               {preview.missing.map((m) => `${m.brand}(${m.center || "-"})`).join(", ")}
             </div>
           )}

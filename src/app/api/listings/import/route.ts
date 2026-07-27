@@ -1,7 +1,7 @@
 // 물량 CSV 가져오기 [1/2] 미리보기 — 파싱 + AI 구조화 결과를 반영 없이 반환
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { parseCsv, enrichRows, buildPlans } from "@/lib/importListings";
+import { parseCsv, parseXlsx, enrichRows, buildPlans } from "@/lib/importListings";
 
 export const maxDuration = 300;
 
@@ -10,11 +10,13 @@ export async function POST(req: NextRequest) {
     const form = await req.formData();
     const file = form.get("file");
     if (!(file instanceof File) || !file.name) {
-      return NextResponse.json({ error: "CSV 파일이 필요합니다." }, { status: 400 });
+      return NextResponse.json({ error: "CSV 또는 엑셀(.xlsx) 파일이 필요합니다." }, { status: 400 });
     }
-    const rows = parseCsv(await file.text());
+    const rows = file.name.toLowerCase().endsWith(".xlsx")
+      ? parseXlsx(Buffer.from(await file.arrayBuffer()))
+      : parseCsv(await file.text());
     if (rows.length === 0) {
-      return NextResponse.json({ error: "가져올 행이 없습니다. 다우 Work에서 내보낸 CSV인지 확인해 주세요." }, { status: 400 });
+      return NextResponse.json({ error: "가져올 행이 없습니다. 다우 Work에서 내보낸 CSV/엑셀 양식인지 확인해 주세요." }, { status: 400 });
     }
 
     const existing = await prisma.listing.findMany({

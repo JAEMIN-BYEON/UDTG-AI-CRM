@@ -259,7 +259,7 @@ export function ConsultForm({ brands }: { brands: string[] }) {
           )}
         </div>
       </form>
-      <p className="mt-12 text-center text-xs text-slate-300">v0.19.0</p>
+      <p className="mt-12 text-center text-xs text-slate-300">v0.20.0</p>
     </main>
   );
 }

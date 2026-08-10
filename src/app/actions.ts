@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { recommend } from "@/lib/engine";
 import { generateReasons } from "@/lib/reason";
+import { deriveShift } from "@/lib/shift";
 
 const CONSENT_POLICY_VERSION = "v1.0-2026-07";
 
@@ -127,34 +128,50 @@ export async function purgeConsultation(consultationId: string) {
 }
 
 // ── 물량 관리 (운영본부, S3) ──────────────────────────────────
+// 8.10 항목 개편: 폼은 담당자 실무 항목만 노출, 추천용 내부 값은 자동 유추/기본값
 const listingSchema = z.object({
   brand: z.string().min(1),
-  category: z.string().min(1), // CSV 가져오기 이후 자유 분류 (상온/저온/식자재/잡화 등)
   center: z.string().default(""),
-  region: z.string().min(1),
-  workHours: z.string().default(""),
-  shift: z.enum(["주간", "야간", "격일"]),
-  payStructure: z.enum(["완제", "무제", "매출제"]),
-  incomeMin: z.coerce.number().int(),
-  incomeMax: z.coerce.number().int(),
-  physicalLoad: z.coerce.number().int().min(1).max(5),
-  loadType: z.string().default(""),
-  numberPlates: z.string().min(1),
-  vehicleRequirement: z.string().min(1),
-  initialCapitalMin: z.coerce.number().int(),
-  slotCount: z.coerce.number().int().min(0),
+  category: z.string().min(1), // 상품종류 (상온/저온/식자재/잡화 등 자유 분류)
+  region: z.string().min(1), // 권역
+  startTime: z.string().default(""), // 출근시간
+  workHours: z.string().default(""), // 업무시간
+  incomeMin: z.coerce.number().int(), // 운송료 최소 (만원)
+  incomeMax: z.coerce.number().int(), // 운송료 최대 (만원)
+  extraPay: z.string().default(""), // 기타수당
+  workDays: z.string().default(""), // 운행일수
+  holidays: z.string().default(""), // 휴무일
+  slotCount: z.coerce.number().int().min(0), // 증차대수
+  vehicleRequirement: z.string().min(1), // 차량조건(차종)
+  loadType: z.string().default(""), // 상차방식
+  unloadMethod: z.string().default(""), // 하차방식
   pros: z.string().default(""),
   cons: z.string().default(""),
-  sunTopAvailable: z.coerce.boolean().default(false),
   internalMemo: z.string().default(""),
 });
 
 export async function saveListing(formData: FormData) {
   const id = formData.get("id") as string | null;
   const data = listingSchema.parse(Object.fromEntries(formData.entries()));
-  // 관리자가 직접 저장하면 검수 완료로 간주 — 확인 필요 표시 해제
-  if (id) await prisma.listing.update({ where: { id }, data: { ...data, reviewNote: "" } });
-  else await prisma.listing.create({ data });
+  if (id) {
+    const existing = await prisma.listing.findUniqueOrThrow({ where: { id } });
+    const shift = data.startTime ? deriveShift(data.startTime, existing.shift) : existing.shift;
+    // 관리자가 직접 저장하면 검수 완료로 간주 — 확인 필요 표시 해제
+    await prisma.listing.update({ where: { id }, data: { ...data, shift, reviewNote: "" } });
+  } else {
+    await prisma.listing.create({
+      data: {
+        ...data,
+        shift: deriveShift(data.startTime),
+        // 폼 미노출 내부 값 기본치 — 추천 엔진 호환 (8.10 항목 제거분)
+        payStructure: "완제",
+        physicalLoad: 3,
+        numberPlates: "협의",
+        initialCapitalMin: 0,
+        sunTopAvailable: true,
+      },
+    });
+  }
   revalidatePath("/admin/listings");
   redirect("/admin/listings");
 }

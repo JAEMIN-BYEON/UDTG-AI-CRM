@@ -34,7 +34,10 @@ export type ImportPlan = {
   center: string;
   category: string;
   region: string;
+  startTime: string;
   workHours: string;
+  workDays: string;
+  holidays: string;
   shift: string;
   payStructure: string;
   incomeMin: number;
@@ -202,7 +205,11 @@ export function buildPlans(rows: CsvRow[], enriched: Map<string, Enriched>, exis
       center: r.center,
       category: r.trait || r.productType || "기타",
       region: e.region || r.dropPlace || r.center || "미정",
-      workHours: e.workHours || r.entryTime || "",
+      startTime: r.entryTime, // 출근시간 = 다우 입차시간 (8.10 항목 개편)
+      workHours: e.workHours || "",
+      workDays: r.workDays,
+      // "26일(일요일휴무)" 형태에서 휴무일 분리
+      holidays: (r.workDays.match(/\(([^)]*휴[^)]*)\)/)?.[1] ?? "").replace(/휴무|휴뮤/g, "").trim(),
       shift: e.shift || "주간",
       payStructure: e.payStructure || "완제",
       incomeMin,

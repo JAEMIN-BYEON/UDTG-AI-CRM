@@ -14,13 +14,18 @@ model Listing {
   brand              String // 다이소, CU, GS25, 쿠팡 간선, 웰스토리 ...
   category           String // 상온배송 | 저온배송 | 간선 | 식자재
   region             String // 콤마 구분 지역 목록 (예: "용인,수원,화성")
-  workHours          String // 예: "06:00-15:00"
-  shift              String // 주간 | 야간 | 격일
+  workHours          String // 업무시간 (예: "06:00-15:00")
+  startTime          String   @default("") // 출근시간 (예: "05~06시") — 8.10 개편
+  shift              String // 주간 | 야간 | 격일 (출근시간에서 자동 유추 — 폼 미노출)
   payStructure       String // 완제 | 무제 | 매출제
   incomeMin          Int // 예상 월 실수령 최소 (만원)
   incomeMax          Int // 예상 월 실수령 최대 (만원)
   physicalLoad       Int // 상하차 강도 1(약)~5(강)
-  loadType           String // 롤테이너 | 박스 | 파렛트 ...
+  loadType           String // 상차방식 (롤테이너 | 박스 | 파렛트 ...)
+  unloadMethod       String   @default("") // 하차방식 — 8.10 개편
+  extraPay           String   @default("") // 기타수당 — 8.10 개편
+  workDays           String   @default("") // 운행일수 (예: "26일") — 8.10 개편
+  holidays           String   @default("") // 휴무일 (예: "일요일") — 8.10 개편
   numberPlates       String // 가능한 넘버 방식, 콤마 구분: "개별,법인임대"
   vehicleRequirement String // 차량 조건 (예: "1톤 냉탑")
   initialCapitalMin  Int // 최소 초기 자금 (만원)

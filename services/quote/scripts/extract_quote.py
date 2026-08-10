@@ -138,10 +138,17 @@ def extract(path):
         key = sub if (sub and sub not in ("", item)) else item
         if not key or not val:
             continue
+        # 개인정보(담당자·연락처·소속)는 어떤 형태로도 산출물에 넣지 않는다 (§9)
+        if any(w in key or w in val for w in ("담당자", "연락처")):
+            continue
         if key in ("운송료",):
             std = "운송료 (평균)"
+        elif "애로" in key:          # "애로 및 건의사항" 등 표기 변형 → 단점 (8.10 확정)
+            std = "단점"
+        elif "세일즈" in key:        # "세일즈 포인트(장점)" 표기 변형 → 장점
+            std = "장점"
         else:
-            std = FIELD_MAP.get(key)
+            std = FIELD_MAP.get(key) or FIELD_MAP.get(key.replace(" ", ""))
         if std:
             prev = data["items"].get(std)
             if prev and isinstance(prev, dict):

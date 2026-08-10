@@ -40,6 +40,7 @@ export type ImportPlan = {
   holidays: string;
   shift: string;
   payStructure: string;
+  fee: string;
   incomeMin: number;
   incomeMax: number;
   physicalLoad: number;
@@ -212,6 +213,7 @@ export function buildPlans(rows: CsvRow[], enriched: Map<string, Enriched>, exis
       holidays: (r.workDays.match(/\(([^)]*휴[^)]*)\)/)?.[1] ?? "").replace(/휴무|휴뮤/g, "").trim(),
       shift: e.shift || "주간",
       payStructure: e.payStructure || "완제",
+      fee: incomeMin || incomeMax ? (incomeMin === incomeMax ? `${incomeMin}만원` : `${incomeMin}~${incomeMax}만원`) : "",
       incomeMin,
       incomeMax,
       physicalLoad: e.physicalLoad ?? 3,

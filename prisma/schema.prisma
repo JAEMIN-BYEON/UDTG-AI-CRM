@@ -18,8 +18,9 @@ model Listing {
   startTime          String   @default("") // 출근시간 (예: "05~06시") — 8.10 개편
   shift              String // 주간 | 야간 | 격일 (출근시간에서 자동 유추 — 폼 미노출)
   payStructure       String // 완제 | 무제 | 매출제
-  incomeMin          Int // 예상 월 실수령 최소 (만원)
-  incomeMax          Int // 예상 월 실수령 최대 (만원)
+  fee                String   @default("") // 운송료 원문 (예: "완제 610만원") — 8.10 개편
+  incomeMin          Int // 운송료에서 자동 추출한 최소 금액 (만원) — 추천 점수용 내부값
+  incomeMax          Int // 운송료에서 자동 추출한 최대 금액 (만원) — 추천 점수용 내부값
   physicalLoad       Int // 상하차 강도 1(약)~5(강)
   loadType           String // 상차방식 (롤테이너 | 박스 | 파렛트 ...)
   unloadMethod       String   @default("") // 하차방식 — 8.10 개편
@@ -36,6 +37,7 @@ model Listing {
   slotCount          Int      @default(1) // 모집 가능 대수 — 0이면 추천 제외
   introMd            String   @default("") // (사용 중지 — PPT 소개서로 대체)
   center             String   @default("") // 센터 위치 (예: 남사, 안성, 부산 강서구)
+  centerAddress      String   @default("") // 센터 상세주소 — 8.10 개편
   externalId         String? // 다우 Work 물량 ID — CSV 재업로드 시 동기화 키
   // 주의: @unique 금지 — 운영 기동 시 prisma db push가 비대화형 확인을 요구해 배포가 실패한다.
   //       유일성은 가져오기 로직(externalId 조회 후 생성/갱신)에서 보장.

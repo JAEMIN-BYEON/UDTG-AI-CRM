@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { recommend } from "@/lib/engine";
 import { generateReasons } from "@/lib/reason";
 import { deriveShift } from "@/lib/shift";
+import { deriveIncomeRange } from "@/lib/income";
 
 const CONSENT_POLICY_VERSION = "v1.0-2026-07";
 
@@ -128,42 +129,46 @@ export async function purgeConsultation(consultationId: string) {
 }
 
 // ── 물량 관리 (운영본부, S3) ──────────────────────────────────
-// 8.10 항목 개편: 폼은 담당자 실무 항목만 노출, 추천용 내부 값은 자동 유추/기본값
+// 8.10 항목 개편(2차): 폼은 담당자 실무 항목만 노출, 추천용 내부 값은 자동 유추/기본값
 const listingSchema = z.object({
   brand: z.string().min(1),
-  center: z.string().default(""),
-  category: z.string().min(1), // 상품종류 (상온/저온/식자재/잡화 등 자유 분류)
+  center: z.string().default(""), // 센터명
+  centerAddress: z.string().default(""), // 센터 상세주소
   region: z.string().min(1), // 권역
+  category: z.string().min(1), // 상품종류
   startTime: z.string().default(""), // 출근시간
   workHours: z.string().default(""), // 업무시간
-  incomeMin: z.coerce.number().int(), // 운송료 최소 (만원)
-  incomeMax: z.coerce.number().int(), // 운송료 최대 (만원)
-  extraPay: z.string().default(""), // 기타수당
-  workDays: z.string().default(""), // 운행일수
+  fee: z.string().min(1), // 운송료 원문 — 금액은 자동 추출
+  workDays: z.string().default(""), // 월 운행일수
   holidays: z.string().default(""), // 휴무일
-  slotCount: z.coerce.number().int().min(0), // 증차대수
-  vehicleRequirement: z.string().min(1), // 차량조건(차종)
-  loadType: z.string().default(""), // 상차방식
+  vehicleRequirement: z.string().min(1), // 차종
+  loadType: z.string().default(""), // 상차방식 및 분류시간
   unloadMethod: z.string().default(""), // 하차방식
-  pros: z.string().default(""),
-  cons: z.string().default(""),
+  pros: z.string().default(""), // 장점
+  cons: z.string().default(""), // 애로 및 건의사항
   internalMemo: z.string().default(""),
 });
 
 export async function saveListing(formData: FormData) {
   const id = formData.get("id") as string | null;
   const data = listingSchema.parse(Object.fromEntries(formData.entries()));
+  const income = deriveIncomeRange(data.fee); // 운송료 원문 → 만원 범위 (추천 점수용)
   if (id) {
     const existing = await prisma.listing.findUniqueOrThrow({ where: { id } });
     const shift = data.startTime ? deriveShift(data.startTime, existing.shift) : existing.shift;
     // 관리자가 직접 저장하면 검수 완료로 간주 — 확인 필요 표시 해제
-    await prisma.listing.update({ where: { id }, data: { ...data, shift, reviewNote: "" } });
+    await prisma.listing.update({
+      where: { id },
+      data: { ...data, incomeMin: income.min, incomeMax: income.max, shift, reviewNote: "" },
+    });
   } else {
     await prisma.listing.create({
       data: {
         ...data,
+        incomeMin: income.min,
+        incomeMax: income.max,
         shift: deriveShift(data.startTime),
-        // 폼 미노출 내부 값 기본치 — 추천 엔진 호환 (8.10 항목 제거분)
+        // 폼 미노출 내부 값 기본치 — 추천 엔진 호환 (증차대수는 목록 ＋/− 또는 CSV로 관리)
         payStructure: "완제",
         physicalLoad: 3,
         numberPlates: "협의",

@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
             holidays: p.holidays,
             shift: p.shift,
             payStructure: p.payStructure,
+            fee: p.fee,
             incomeMin: p.incomeMin,
             incomeMax: p.incomeMax,
             physicalLoad: p.physicalLoad,

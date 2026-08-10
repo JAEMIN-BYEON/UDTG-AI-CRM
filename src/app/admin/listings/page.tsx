@@ -57,7 +57,7 @@ export default async function ListingsPage() {
                   </td>
                   <td className="px-4 py-3">{l.region}</td>
                   <td className="px-4 py-3">{l.startTime || l.shift} {l.workHours}</td>
-                  <td className="px-4 py-3">{l.incomeMin}~{l.incomeMax}만원</td>
+                  <td className="px-4 py-3">{l.fee || (l.incomeMin || l.incomeMax ? `${l.incomeMin}~${l.incomeMax}만원` : "-")}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
                       <form action={adjustSlot.bind(null, l.id, -1)}>

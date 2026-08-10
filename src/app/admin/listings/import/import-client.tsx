@@ -96,7 +96,7 @@ export function ImportClient() {
                   <th className="px-3 py-2">카테고리</th>
                   <th className="px-3 py-2">지역</th>
                   <th className="px-3 py-2">근무</th>
-                  <th className="px-3 py-2">실수령(만원)</th>
+                  <th className="px-3 py-2">운송료(만원)</th>
                   <th className="px-3 py-2">차량</th>
                   <th className="px-3 py-2">잔여</th>
                   <th className="px-3 py-2">확인 필요</th>

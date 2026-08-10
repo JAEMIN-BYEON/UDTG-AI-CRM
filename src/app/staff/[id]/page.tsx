@@ -122,7 +122,7 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
                   {breakdown.map((b) => `${b.label} ${b.points}/${b.max}`).join(" · ")}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  {r.listing.shift}{r.listing.startTime ? ` 출근 ${r.listing.startTime}` : ""} {r.listing.workHours} · 운송료 {r.listing.incomeMin}~{r.listing.incomeMax}만원{r.listing.extraPay ? ` (+${r.listing.extraPay})` : ""} · {r.listing.vehicleRequirement}{r.listing.holidays ? ` · 휴무 ${r.listing.holidays}` : ""}
+                  {r.listing.shift}{r.listing.startTime ? ` 출근 ${r.listing.startTime}` : ""} {r.listing.workHours} · 운송료 {r.listing.fee || `${r.listing.incomeMin}~${r.listing.incomeMax}만원`} · {r.listing.vehicleRequirement}{r.listing.holidays ? ` · 휴무 ${r.listing.holidays}` : ""}
                 </p>
               </div>
             );

@@ -13,15 +13,15 @@ async function main() {
   // K1: 동의
   await page.goto(`${BASE}/consult`, { waitUntil: "networkidle" });
   await page.check('input[name="consent"]');
-  // 하이드레이션 전 클릭이 씹힐 수 있어 재시도
+  // 하이드레이션 전 클릭이 씹힐 수 있어 재시도 (동의되면 버튼 라벨이 바뀐다)
   for (let i = 0; i < 10; i++) {
-    if (await page.locator("text=다음 →").isEnabled()) break;
+    if (await page.locator("text=동의하고 시작하기").isVisible().catch(() => false)) break;
     await page.uncheck('input[name="consent"]').catch(() => {});
     await page.check('input[name="consent"]');
     await page.waitForTimeout(300);
   }
   await page.screenshot({ path: `${SHOT_DIR}/1-consent.png` });
-  await page.click("text=다음 →");
+  await page.click("text=동의하고 시작하기");
 
   // K2-1: 기본 정보 (7.20 개편안)
   await page.fill('input[name="name"]', "김운수");
@@ -49,7 +49,7 @@ async function main() {
   await page.click("text=다음 →");
 
   // K2-4: 제출 — 클릭 즉시 로딩 오버레이가 떠야 한다 (멈춘 화면 오인 방지)
-  await page.click("text=AI 추천 받기");
+  await page.click('button:has-text("AI 추천 받기")');
   await page.waitForSelector("text=AI가 분석하고 있습니다", { timeout: 2000 });
   await page.waitForSelector("text=초 경과", { timeout: 2000 });
   console.log("클릭 즉시 로딩 오버레이(진행 바·경과 시간) 표시 ✓");

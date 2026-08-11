@@ -21,7 +21,7 @@ export default async function ListingTrashPage() {
         <Link href="/admin/listings" className="text-sm text-slate-400 hover:text-slate-600">← 물량 관리</Link>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="mt-6 overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>

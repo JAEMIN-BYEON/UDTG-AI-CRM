@@ -48,7 +48,7 @@ export function ConsultForm({ brands }: { brands: string[] }) {
   const show = (i: number) => (step === i ? "" : "hidden");
 
   return (
-    <main className="mx-auto max-w-2xl p-6 pb-24">
+    <main className="mx-auto max-w-2xl p-6 pb-36">
       {submitting && (
         <LoadingOverlay
           title="AI가 분석하고 있습니다"
@@ -61,17 +61,26 @@ export function ConsultForm({ brands }: { brands: string[] }) {
         />
       )}
 
-      {/* 진행 표시 */}
-      <div className="mb-8 flex items-center gap-2">
-        {STEPS.map((s, i) => (
-          <div key={s} className="flex items-center gap-2">
-            <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${i <= step ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-500"}`}>
-              {i + 1}
-            </div>
-            <span className={`text-sm ${i === step ? "font-bold text-blue-700" : "text-slate-400"}`}>{s}</span>
-            {i < STEPS.length - 1 && <div className="h-px w-4 bg-slate-300" />}
-          </div>
-        ))}
+      {/* 진행 표시 — 큰 글자 + 진행 바 (고령 고객이 남은 단계를 한눈에) */}
+      <div className="mb-8">
+        <div className="flex items-end justify-between">
+          <p className="text-2xl font-bold text-blue-700">
+            {step + 1}단계 <span className="text-lg font-normal text-slate-400">/ 총 {STEPS.length}단계</span>
+          </p>
+          <p className="text-lg font-semibold text-slate-600">{STEPS[step]}</p>
+        </div>
+        <div
+          className="mt-3 flex gap-1.5"
+          role="progressbar"
+          aria-valuemin={1}
+          aria-valuemax={STEPS.length}
+          aria-valuenow={step + 1}
+          aria-label={`총 ${STEPS.length}단계 중 ${step + 1}단계 (${STEPS[step]})`}
+        >
+          {STEPS.map((s, i) => (
+            <div key={s} className={`h-2.5 flex-1 rounded-full transition-colors ${i <= step ? "bg-blue-600" : "bg-slate-200"}`} />
+          ))}
+        </div>
       </div>
 
       <form
@@ -203,63 +212,70 @@ export function ConsultForm({ brands }: { brands: string[] }) {
         <section className={show(4)}>
           <h2 className="mb-4 text-2xl font-bold">입력을 완료하셨습니다</h2>
           <p className="mb-6 text-lg text-slate-600">
-            아래 버튼을 누르면 입력하신 조건으로 <b>AI가 맞춤 물량을 추천</b>해 드립니다.
+            아래의 <b className="text-blue-700">AI 추천 받기</b> 버튼을 누르면 입력하신 조건으로 <b>AI가 맞춤 물량을 추천</b>해 드립니다.
           </p>
-          <button
-            type="button"
-            disabled={submitting}
-            onClick={(e) => {
-              // 숨겨진 단계에 미입력 필드가 있으면 브라우저가 제출을 소리 없이 막는다
-              // → 전체 단계를 직접 검사해 문제 단계로 이동시키고 안내 말풍선을 띄운다
-              const form = (e.target as HTMLElement).closest("form")!;
-              const sections = Array.from(form.querySelectorAll("section"));
-              for (let i = 0; i < sections.length; i++) {
-                const controls = sections[i].querySelectorAll<HTMLInputElement>("input, textarea, select");
-                for (const el of controls) {
-                  if (!el.checkValidity()) {
-                    setStep(i);
-                    setTimeout(() => el.reportValidity(), 100);
-                    return;
-                  }
-                }
-              }
-              // 클릭 즉시(액션 시작 전) 오버레이를 띄운다 — 일반 이벤트라 바로 렌더됨
-              setSubmitting(true);
-              form.requestSubmit();
-            }}
-            className="w-full rounded-2xl bg-blue-600 px-8 py-6 text-2xl font-bold text-white shadow-lg transition hover:bg-blue-700 disabled:opacity-50"
-          >
-            {submitting ? "AI가 물량을 분석하고 있습니다..." : "AI 추천 받기"}
-          </button>
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-lg leading-relaxed text-slate-600">
+            분석에는 최대 1분 정도 걸릴 수 있습니다. 버튼을 누른 뒤 잠시만 기다려 주세요.
+          </div>
         </section>
 
-        {/* 이동 버튼 */}
-        <div className="mt-10 flex justify-between">
-          <button
-            type="button"
-            onClick={() => setStep((s) => Math.max(0, s - 1))}
-            className={`rounded-xl border border-slate-300 px-8 py-4 text-lg font-semibold ${step === 0 ? "invisible" : ""}`}
-          >
-            ← 이전
-          </button>
-          {step < STEPS.length - 1 && (
+        {/* 이동 버튼 — 하단 고정: 버튼 위치가 항상 같아 헤매지 않음 (고령 배려) */}
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 shadow-[0_-4px_16px_rgba(15,23,42,0.06)] backdrop-blur">
+          <div className="mx-auto flex max-w-2xl items-center gap-3 px-6 py-4">
             <button
               type="button"
-              disabled={step === 0 && !consented}
-              onClick={(e) => {
-                const form = (e.target as HTMLElement).closest("form")!;
-                const current = form.querySelectorAll(`section:not(.hidden) input, section:not(.hidden) textarea, section:not(.hidden) select`);
-                for (const el of current) if (!(el as HTMLInputElement).reportValidity()) return;
-                setStep((s) => s + 1);
-              }}
-              className="rounded-xl bg-blue-600 px-8 py-4 text-lg font-bold text-white disabled:opacity-40"
+              onClick={() => setStep((s) => Math.max(0, s - 1))}
+              className={`min-h-14 rounded-xl border-2 border-slate-300 px-7 text-lg font-semibold text-slate-600 transition hover:bg-slate-100 ${step === 0 ? "invisible" : ""}`}
             >
-              다음 →
+              ← 이전
             </button>
-          )}
+            {step < STEPS.length - 1 ? (
+              <button
+                type="button"
+                disabled={step === 0 && !consented}
+                onClick={(e) => {
+                  const form = (e.target as HTMLElement).closest("form")!;
+                  const current = form.querySelectorAll(`section:not(.hidden) input, section:not(.hidden) textarea, section:not(.hidden) select`);
+                  for (const el of current) if (!(el as HTMLInputElement).reportValidity()) return;
+                  setStep((s) => s + 1);
+                  window.scrollTo({ top: 0 });
+                }}
+                className="min-h-14 flex-1 rounded-xl bg-blue-600 text-xl font-bold text-white transition hover:bg-blue-700 disabled:opacity-40"
+              >
+                {step === 0 ? (consented ? "동의하고 시작하기 →" : "동의에 체크해 주세요") : "다음 →"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={(e) => {
+                  // 숨겨진 단계에 미입력 필드가 있으면 브라우저가 제출을 소리 없이 막는다
+                  // → 전체 단계를 직접 검사해 문제 단계로 이동시키고 안내 말풍선을 띄운다
+                  const form = (e.target as HTMLElement).closest("form")!;
+                  const sections = Array.from(form.querySelectorAll("section"));
+                  for (let i = 0; i < sections.length; i++) {
+                    const controls = sections[i].querySelectorAll<HTMLInputElement>("input, textarea, select");
+                    for (const el of controls) {
+                      if (!el.checkValidity()) {
+                        setStep(i);
+                        setTimeout(() => el.reportValidity(), 100);
+                        return;
+                      }
+                    }
+                  }
+                  // 클릭 즉시(액션 시작 전) 오버레이를 띄운다 — 일반 이벤트라 바로 렌더됨
+                  setSubmitting(true);
+                  form.requestSubmit();
+                }}
+                className="min-h-14 flex-1 rounded-xl bg-blue-600 text-xl font-bold text-white shadow-lg transition hover:bg-blue-700 disabled:opacity-50"
+              >
+                {submitting ? "AI가 물량을 분석하고 있습니다..." : "🤖 AI 추천 받기"}
+              </button>
+            )}
+          </div>
         </div>
       </form>
-      <p className="mt-12 text-center text-xs text-slate-300">v0.22.0</p>
+      <p className="mt-12 text-center text-xs text-slate-300">v0.23.0</p>
     </main>
   );
 }

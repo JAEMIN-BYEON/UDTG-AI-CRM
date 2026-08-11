@@ -20,7 +20,7 @@ export default async function StaffTrashPage() {
         <Link href="/staff" className="text-sm text-slate-400 hover:text-slate-600">← 대시보드</Link>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="mt-6 overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>

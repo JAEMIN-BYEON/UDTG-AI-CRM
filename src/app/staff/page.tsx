@@ -59,7 +59,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
         </form>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="mt-6 overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full text-left">
           <thead className="bg-slate-50 text-sm text-slate-500">
             <tr>

@@ -1,27 +1,72 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* ── 디자인 토큰 (접근성 우선: 고대비, 큰 터치 타깃, 명확한 포커스) ─────────
+   고객(키오스크) 화면과 직원 화면이 같은 토큰을 공유한다. 키오스크 특성상
+   외부 폰트 의존 없이 한글 시스템 폰트 스택을 사용하고, 라이트 모드로 고정한다. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc; /* slate-50 */
+  --foreground: #0f172a; /* slate-900 */
+  --primary: #2563eb; /* blue-600 — 신뢰 (기존 브랜드 톤 유지) */
+  color-scheme: light; /* 키오스크 OS 다크모드에 입력창이 검게 바뀌는 것 방지 */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  font-family:
+    "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Noto Sans KR",
+    "Malgun Gothic", system-ui, -apple-system, sans-serif;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Tailwind v4는 버튼 기본 커서가 default — 클릭 가능 요소는 pointer로 통일 */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+label:has(input[type="radio"]),
+label:has(input[type="checkbox"]) {
+  cursor: pointer;
+}
+
+/* 키보드 접근성: 뚜렷한 포커스 링 (3px, 본체와 분리) */
+:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 라디오 칩(sr-only input) 포커스 시 라벨 칩에 링 표시 */
+label:has(input.peer:focus-visible) > span {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #bfdbfe; /* blue-200 */
+}
+
+/* 모션 민감 사용자 배려 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 인쇄: 화면 전용 요소 정리 (리포트 §9) */
+@media print {
+  body {
+    background: #fff;
+  }
 }

@@ -192,10 +192,10 @@ export function buildPlans(rows: CsvRow[], enriched: Map<string, Enriched>, exis
 
     const incomeMin = e.incomeFound && e.incomeMin ? e.incomeMin : 0;
     const incomeMax = e.incomeFound ? (e.incomeMax ?? e.incomeMin ?? 0) : 0;
-    if (!e.incomeFound) missing.push("실수령액");
-    if (!e.shift) missing.push("주간/야간");
-    if (!r.tonnage) missing.push("차량 조건");
-    missing.push("초기 자금"); // CSV에 없음 — 항상 확인 필요
+    if (!e.incomeFound) missing.push("운송료");
+    if (!e.shift && !r.entryTime) missing.push("출근시간(주간/야간 판별)");
+    if (!r.tonnage) missing.push("차종");
+    // (초기 자금 항목은 8.10 개편으로 폐지 — 더 이상 검수 대상 아님)
 
     const internalMemo = [
       r.centerContact && `센터 담당: ${r.centerContact}`,

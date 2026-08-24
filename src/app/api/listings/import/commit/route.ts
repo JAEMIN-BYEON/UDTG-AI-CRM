@@ -20,7 +20,13 @@ export async function POST(req: NextRequest) {
       if (existing) {
         await prisma.listing.update({
           where: { id: existing.id },
-          data: { slotCount: p.slotCount, internalMemo: p.internalMemo, deletedAt: null },
+          data: {
+            slotCount: p.slotCount,
+            internalMemo: p.internalMemo,
+            deletedAt: null,
+            // 아직 검수 전(경고 남음)인 물량만 경고문을 최신 기준으로 갱신 — 검수 완료 표시는 보존
+            ...(existing.reviewNote ? { reviewNote: p.reviewNote } : {}),
+          },
         });
         updated++;
       } else {

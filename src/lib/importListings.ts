@@ -59,20 +59,27 @@ export type ImportPlan = {
 const header = (h: string) => h.replace(/[﻿"]/g, "").replace(/\s+/g, "").replace(/^\*/, "");
 
 function mapRecord(r: Record<string, unknown>): CsvRow {
-  const g = (k: string) => String(r[k] ?? "").trim();
+  const g = (...keys: string[]) => {
+    for (const k of keys) {
+      // 다우 내보내기에 수직탭 등 제어문자가 섞여 있음 → 공백으로 정리
+      const v = String(r[k] ?? "").replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, " ").replace(/\s+/g, " ").trim();
+      if (v) return v;
+    }
+    return "";
+  };
   return {
     externalId: g("ID").replace(/"/g, "").trim(),
     status: g("상태"),
     brand: g("브랜드"),
-    center: g("센터위치"),
-    trait: g("특성"),
-    tonnage: g("톤수"),
+    center: g("센터위치", "센터명"), // 8.24 신양식: 센터명
+    trait: g("특성", "상품종류"), // 8.24 신양식: 상품종류
+    tonnage: g("톤수", "차종"), // 8.24 신양식: 차종
     productType: g("상품분류"),
     centerContact: g("센터담당자"),
     loadPlace: g("상차지"),
-    dropPlace: g("하차지"),
-    workDays: g("운행일수"),
-    entryTime: g("입차시간"),
+    dropPlace: g("하차지", "권역"), // 8.24 신양식: 권역
+    workDays: g("운행일수", "월운행일수"),
+    entryTime: g("입차시간", "출근시간"),
     loadDuration: g("상차평균소요시간"),
     deliveryTime: g("평균배송시간/배송종료시간"),
     storeCount: g("점포수"),

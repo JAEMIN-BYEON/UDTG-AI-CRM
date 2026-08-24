@@ -8,7 +8,7 @@ export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   try {
-    const { plans } = (await req.json()) as { plans: ImportPlan[] };
+    const { plans, trashMissingIds } = (await req.json()) as { plans: ImportPlan[]; trashMissingIds?: string[] };
     if (!Array.isArray(plans) || plans.length === 0) {
       return NextResponse.json({ error: "반영할 계획이 없습니다." }, { status: 400 });
     }
@@ -57,7 +57,17 @@ export async function POST(req: NextRequest) {
         created++;
       }
     }
-    return NextResponse.json({ created, updated });
+    // 파일에 없는 기존 연동 물량 일괄 휴지통 이동 (다우 보드 재구성 시 구 데이터 정리)
+    // 수기 등록 물량(externalId 없음)은 어떤 경우에도 건드리지 않는다
+    let trashed = 0;
+    if (Array.isArray(trashMissingIds) && trashMissingIds.length > 0) {
+      const res = await prisma.listing.updateMany({
+        where: { id: { in: trashMissingIds }, externalId: { not: null }, deletedAt: null },
+        data: { deletedAt: new Date(), isActive: false },
+      });
+      trashed = res.count;
+    }
+    return NextResponse.json({ created, updated, trashed });
   } catch (e) {
     console.error("CSV 반영 실패:", e);
     return NextResponse.json({ error: e instanceof Error ? e.message : "반영 실패" }, { status: 500 });

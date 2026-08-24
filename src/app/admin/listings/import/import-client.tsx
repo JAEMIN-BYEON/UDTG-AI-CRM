@@ -12,6 +12,7 @@ export function ImportClient() {
   const [busy, setBusy] = useState<string | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [trashMissing, setTrashMissing] = useState(false);
 
   return (
     <div>
@@ -55,17 +56,21 @@ export function ImportClient() {
             <button
               disabled={!!busy}
               onClick={async () => {
-                if (!confirm(`${preview.plans.length}건을 반영할까요?\n신규 물량은 비활성(검수 대기)으로 등록됩니다.`)) return;
+                const extra = trashMissing && preview.missing.length > 0 ? `\n※ 파일에 없는 기존 연동 물량 ${preview.missing.length}건은 휴지통으로 이동합니다.` : "";
+                if (!confirm(`${preview.plans.length}건을 반영할까요?\n신규 물량은 비활성(검수 대기)으로 등록됩니다.${extra}`)) return;
                 setBusy("반영 중...");
                 try {
                   const r = await fetch("/api/listings/import/commit", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ plans: preview.plans }),
+                    body: JSON.stringify({
+                      plans: preview.plans,
+                      trashMissingIds: trashMissing ? preview.missing.map((m) => m.id) : [],
+                    }),
                   });
                   const j = await r.json();
                   if (!r.ok) throw new Error(j.error ?? "반영 실패");
-                  setMsg(`✅ 반영 완료 — 신규 ${j.created}건 등록(비활성), 기존 ${j.updated}건 잔여 대수 갱신`);
+                  setMsg(`✅ 반영 완료 — 신규 ${j.created}건 등록(비활성), 기존 ${j.updated}건 잔여 대수 갱신${j.trashed ? `, 구 연동 물량 ${j.trashed}건 휴지통 이동` : ""}`);
                   setPreview(null);
                   router.refresh();
                 } catch (err) {
@@ -82,8 +87,13 @@ export function ImportClient() {
 
           {preview.missing.length > 0 && (
             <div className="mt-3 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
-              ⚠ 이번 파일에 없는 기존 연동 물량 {preview.missing.length}건 — 다우에서 삭제된 것일 수 있으니 확인 후 필요 시 모집 중지하세요:{" "}
-              {preview.missing.map((m) => `${m.brand}(${m.center || "-"})`).join(", ")}
+              ⚠ 이번 파일에 없는 기존 연동 물량 <b>{preview.missing.length}건</b> —{" "}
+              {preview.missing.slice(0, 12).map((m) => `${m.brand}(${m.center || "-"})`).join(", ")}
+              {preview.missing.length > 12 ? ` 외 ${preview.missing.length - 12}건` : ""}
+              <label className="mt-2 flex cursor-pointer items-center gap-2 font-semibold">
+                <input type="checkbox" checked={trashMissing} onChange={(e) => setTrashMissing(e.target.checked)} className="h-4 w-4" />
+                반영할 때 이 {preview.missing.length}건을 휴지통으로 이동 (다우 보드를 새로 만들어 ID가 바뀐 경우 체크 — 중복 방지, 휴지통에서 복구 가능)
+              </label>
             </div>
           )}
 

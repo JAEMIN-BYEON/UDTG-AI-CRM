@@ -1,10 +1,40 @@
 // 물량 CSV 가져오기 [2/2] 반영 — 미리보기에서 확인한 계획을 실제 등록/갱신
-// 정책: 신규는 비활성으로 생성(관리자 확인 후 활성화), 기존(externalId 일치)은 잔여 대수·내부메모만 갱신
+// 정책: 신규는 비활성으로 생성(관리자 확인 후 활성화).
+// 기존(externalId 일치)은 — 검수 전(경고 남음)이면 다우 데이터로 전체 갱신,
+// 검수 완료면 관리자가 손본 내용 보존을 위해 잔여 대수·내부메모만 갱신.
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import type { ImportPlan } from "@/lib/importListings";
 
 export const maxDuration = 120;
+
+// 다우 파일에서 오는 데이터 필드 (검수 전 물량 전체 갱신용)
+function importedFields(p: ImportPlan) {
+  return {
+    brand: p.brand,
+    center: p.center,
+    centerAddress: p.centerAddress,
+    category: p.category,
+    region: p.region,
+    startTime: p.startTime,
+    workHours: p.workHours,
+    workDays: p.workDays,
+    holidays: p.holidays,
+    shift: p.shift,
+    payStructure: p.payStructure,
+    fee: p.fee,
+    incomeMin: p.incomeMin,
+    incomeMax: p.incomeMax,
+    physicalLoad: p.physicalLoad,
+    loadType: p.loadType,
+    unloadMethod: p.unloadMethod,
+    vehicleRequirement: p.vehicleRequirement,
+    pros: p.pros,
+    cons: p.cons,
+    slotCount: p.slotCount,
+    internalMemo: p.internalMemo,
+  };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,43 +50,22 @@ export async function POST(req: NextRequest) {
       if (existing) {
         await prisma.listing.update({
           where: { id: existing.id },
-          data: {
-            slotCount: p.slotCount,
-            internalMemo: p.internalMemo,
-            deletedAt: null,
-            // 아직 검수 전(경고 남음)인 물량만 경고문을 최신 기준으로 갱신 — 검수 완료 표시는 보존
-            ...(existing.reviewNote ? { reviewNote: p.reviewNote } : {}),
-          },
+          data: existing.reviewNote
+            ? // 검수 전 — 다우 최신 데이터로 전체 갱신 (경고문도 최신화)
+              { ...importedFields(p), reviewNote: p.reviewNote, deletedAt: null }
+            : // 검수 완료 — 관리자 수정 보존, 잔여 대수·내부메모만
+              { slotCount: p.slotCount, internalMemo: p.internalMemo, deletedAt: null },
         });
         updated++;
       } else {
         await prisma.listing.create({
           data: {
-            brand: p.brand,
-            category: p.category,
-            region: p.region,
-            startTime: p.startTime,
-            workHours: p.workHours,
-            workDays: p.workDays,
-            holidays: p.holidays,
-            shift: p.shift,
-            payStructure: p.payStructure,
-            fee: p.fee,
-            incomeMin: p.incomeMin,
-            incomeMax: p.incomeMax,
-            physicalLoad: p.physicalLoad,
-            loadType: p.loadType,
+            ...importedFields(p),
             numberPlates: p.numberPlates,
-            vehicleRequirement: p.vehicleRequirement,
             initialCapitalMin: 0,
-            pros: p.pros,
-            cons: p.cons,
             sunTopAvailable: true,
             isActive: false, // 관리자 확인 후 활성화 (7.27 정책)
-            slotCount: p.slotCount,
-            center: p.center,
             externalId: p.externalId,
-            internalMemo: p.internalMemo,
             reviewNote: p.reviewNote,
           },
         });

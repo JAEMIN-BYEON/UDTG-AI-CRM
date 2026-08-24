@@ -4,6 +4,8 @@
 import { parse } from "csv-parse/sync";
 import * as XLSX from "xlsx";
 import OpenAI from "openai";
+import { deriveShift } from "@/lib/shift";
+import { deriveIncomeRange } from "@/lib/income";
 
 const MODEL = process.env.OPENAI_MODEL ?? "gpt-5.6";
 
@@ -13,7 +15,15 @@ export type CsvRow = {
   brand: string;
   center: string; // 센터위치
   trait: string; // 특성
-  tonnage: string; // 톤수
+  tonnage: string; // 톤수/차종
+  centerAddress: string; // 센터 상세주소 (8.24 신양식)
+  workHoursRaw: string; // 업무시간 (8.24 신양식)
+  fee: string; // 운송료 원문 (8.24 신양식)
+  holidaysRaw: string; // 휴무일 (8.24 신양식)
+  loadTypeRaw: string; // 상차방식 및 분류시간 (8.24 신양식)
+  unloadRaw: string; // 하차방식 (8.24 신양식)
+  prosRaw: string; // 장점 (8.24 신양식)
+  consRaw: string; // 애로 및 건의사항 (8.24 신양식)
   productType: string; // 상품분류
   centerContact: string; // 센터 담당자
   loadPlace: string; // 상차지
@@ -32,6 +42,7 @@ export type ImportPlan = {
   action: "create" | "update";
   brand: string;
   center: string;
+  centerAddress: string;
   category: string;
   region: string;
   startTime: string;
@@ -45,6 +56,7 @@ export type ImportPlan = {
   incomeMax: number;
   physicalLoad: number;
   loadType: string;
+  unloadMethod: string;
   numberPlates: string;
   vehicleRequirement: string;
   slotCount: number;
@@ -74,6 +86,14 @@ function mapRecord(r: Record<string, unknown>): CsvRow {
     center: g("센터위치", "센터명"), // 8.24 신양식: 센터명
     trait: g("특성", "상품종류"), // 8.24 신양식: 상품종류
     tonnage: g("톤수", "차종"), // 8.24 신양식: 차종
+    centerAddress: g("센터상세주소"),
+    workHoursRaw: g("업무시간"),
+    fee: g("운송료"),
+    holidaysRaw: g("휴무일"),
+    loadTypeRaw: g("상차방식및분류시간"),
+    unloadRaw: g("하차방식"),
+    prosRaw: g("장점"),
+    consRaw: g("애로및건의사항"),
     productType: g("상품분류"),
     centerContact: g("센터담당자"),
     loadPlace: g("상차지"),
@@ -190,9 +210,12 @@ export function buildPlans(rows: CsvRow[], enriched: Map<string, Enriched>, exis
     const e: Enriched = enriched.get(r.externalId) ?? { externalId: r.externalId };
     const missing: string[] = [];
 
-    const incomeMin = e.incomeFound && e.incomeMin ? e.incomeMin : 0;
-    const incomeMax = e.incomeFound ? (e.incomeMax ?? e.incomeMin ?? 0) : 0;
-    if (!e.incomeFound) missing.push("운송료");
+    // 운송료: 다우 운송료 컬럼(결정론) 우선, 없으면 AI 추정 (8.24 신양식)
+    const feeRange = r.fee ? deriveIncomeRange(r.fee) : { min: 0, max: 0 };
+    const incomeMin = feeRange.min || (e.incomeFound && e.incomeMin ? e.incomeMin : 0);
+    const incomeMax = feeRange.max || (e.incomeFound ? (e.incomeMax ?? e.incomeMin ?? 0) : 0);
+    if (!r.fee && !e.incomeFound) missing.push("운송료");
+    if (r.fee && !feeRange.min) missing.push("운송료 금액 인식 실패");
     if (!e.shift && !r.entryTime) missing.push("출근시간(주간/야간 판별)");
     if (!r.tonnage) missing.push("차종");
     // (초기 자금 항목은 8.10 개편으로 폐지 — 더 이상 검수 대상 아님)
@@ -213,23 +236,25 @@ export function buildPlans(rows: CsvRow[], enriched: Map<string, Enriched>, exis
       center: r.center,
       category: r.trait || r.productType || "기타",
       region: e.region || r.dropPlace || r.center || "미정",
-      startTime: r.entryTime, // 출근시간 = 다우 입차시간 (8.10 항목 개편)
-      workHours: e.workHours || "",
+      centerAddress: r.centerAddress,
+      startTime: r.entryTime, // 출근시간 = 다우 입차시간/출근시간
+      workHours: r.workHoursRaw || e.workHours || "",
       workDays: r.workDays,
-      // "26일(일요일휴무)" 형태에서 휴무일 분리
-      holidays: (r.workDays.match(/\(([^)]*휴[^)]*)\)/)?.[1] ?? "").replace(/휴무|휴뮤/g, "").trim(),
-      shift: e.shift || "주간",
-      payStructure: e.payStructure || "완제",
-      fee: incomeMin || incomeMax ? (incomeMin === incomeMax ? `${incomeMin}만원` : `${incomeMin}~${incomeMax}만원`) : "",
+      // 휴무일 컬럼(신양식) 우선, 없으면 "26일(일요일휴무)" 형태에서 분리
+      holidays: r.holidaysRaw || (r.workDays.match(/\(([^)]*휴[^)]*)\)/)?.[1] ?? "").replace(/휴무|휴뮤/g, "").trim(),
+      shift: e.shift || deriveShift(r.entryTime),
+      payStructure: r.fee.includes("매출제") ? "매출제" : r.fee.includes("무제") ? "무제" : e.payStructure || "완제",
+      fee: r.fee || (incomeMin || incomeMax ? (incomeMin === incomeMax ? `${incomeMin}만원` : `${incomeMin}~${incomeMax}만원`) : ""),
       incomeMin,
       incomeMax,
       physicalLoad: e.physicalLoad ?? 3,
-      loadType: e.loadType || "",
+      loadType: r.loadTypeRaw || e.loadType || "",
+      unloadMethod: r.unloadRaw,
       numberPlates: e.numberPlates || "협의",
       vehicleRequirement: r.tonnage || "확인필요",
       slotCount: slotFromStatus(r.status),
-      pros: e.pros || "",
-      cons: e.cons || "",
+      pros: r.prosRaw || e.pros || "",
+      cons: r.consRaw || e.cons || "",
       internalMemo,
       reviewNote: missing.length ? `확인 필요: ${missing.join(", ")}` : "",
       enriched: enriched.has(r.externalId),

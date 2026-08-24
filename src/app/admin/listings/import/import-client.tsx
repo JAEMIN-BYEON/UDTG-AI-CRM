@@ -14,23 +14,32 @@ export function ImportClient() {
   const [msg, setMsg] = useState<string | null>(null);
   const [trashMissing, setTrashMissing] = useState(false);
 
+  // 파일 검증 + 미리보기 API 호출 (미리보기·바로 업로드 공용)
+  async function analyze(form: HTMLFormElement): Promise<Preview | null> {
+    const fd = new FormData(form);
+    const f = fd.get("file");
+    if (!(f instanceof File) || !f.name) {
+      setMsg("CSV 또는 엑셀(.xlsx) 파일을 선택하세요.");
+      return null;
+    }
+    const r = await fetch("/api/listings/import", { method: "POST", body: fd });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error ?? "분석 실패");
+    return j as Preview;
+  }
+
   return (
     <div>
       <form
         className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-4"
         onSubmit={async (e) => {
           e.preventDefault();
-          const fd = new FormData(e.currentTarget as HTMLFormElement);
-          const f = fd.get("file");
-          if (!(f instanceof File) || !f.name) return setMsg("CSV 또는 엑셀(.xlsx) 파일을 선택하세요.");
           setBusy("AI가 물량 데이터를 구조화하고 있습니다... (최대 2분)");
           setMsg(null);
           setPreview(null);
           try {
-            const r = await fetch("/api/listings/import", { method: "POST", body: fd });
-            const j = await r.json();
-            if (!r.ok) throw new Error(j.error ?? "미리보기 실패");
-            setPreview(j);
+            const p = await analyze(e.currentTarget as HTMLFormElement);
+            if (p) setPreview(p);
           } catch (err) {
             setMsg(`❌ ${err instanceof Error ? err.message : "미리보기 실패"}`);
           } finally {
@@ -40,8 +49,44 @@ export function ImportClient() {
       >
         <input type="file" name="file" accept=".csv,.xlsx" className="text-sm" />
         <button disabled={!!busy} className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">
-          {busy ?? "미리보기 생성"}
+          미리보기 생성
         </button>
+        <button
+          type="button"
+          disabled={!!busy}
+          onClick={async (e) => {
+            // 검수 화면 없이 한 번에 반영 (분석 → 확인창 → 반영)
+            const form = (e.target as HTMLElement).closest("form")!;
+            setMsg(null);
+            setPreview(null);
+            setBusy("분석 후 바로 반영하는 중... (최대 2분)");
+            try {
+              const p = await analyze(form as HTMLFormElement);
+              if (!p) return;
+              const creates = p.plans.filter((x) => x.action === "create").length;
+              const updates = p.plans.length - creates;
+              const missingNote = p.missing.length > 0 ? `\n※ 파일에 없는 기존 연동 물량 ${p.missing.length}건은 그대로 둡니다 (정리가 필요하면 미리보기 경로를 이용하세요).` : "";
+              if (!confirm(`총 ${p.plans.length}건을 바로 반영할까요?\n신규 ${creates}건(비활성·검수 대기) · 갱신 ${updates}건${missingNote}`)) return;
+              const r = await fetch("/api/listings/import/commit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ plans: p.plans, trashMissingIds: [] }),
+              });
+              const j = await r.json();
+              if (!r.ok) throw new Error(j.error ?? "반영 실패");
+              setMsg(`✅ 업로드 완료 — 신규 ${j.created}건 등록(비활성), 기존 ${j.updated}건 잔여 대수 갱신`);
+              router.refresh();
+            } catch (err) {
+              setMsg(`❌ ${err instanceof Error ? err.message : "업로드 실패"}`);
+            } finally {
+              setBusy(null);
+            }
+          }}
+          className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+        >
+          ⬆ 파일 업로드 (바로 반영)
+        </button>
+        {busy && <span className="text-sm text-slate-500">{busy}</span>}
         {msg && <span className="text-sm">{msg}</span>}
       </form>
 

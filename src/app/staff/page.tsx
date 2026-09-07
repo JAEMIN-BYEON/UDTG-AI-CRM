@@ -76,7 +76,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
               <tr key={c.id} className="hover:bg-slate-50">
                 <td className="px-4 py-3 text-sm text-slate-500">{fmtDateTime(c.createdAt)}</td>
                 <td className="px-4 py-3 font-semibold">{c.name} <span className="text-sm font-normal text-slate-400">({c.age}세)</span></td>
-                <td className="px-4 py-3 text-sm">{c.desiredRegion} · {c.shiftAvailability} · 월 {c.desiredIncome}만원</td>
+                <td className="px-4 py-3 text-sm">{c.desiredRegion.split(",").join("·")} · {c.shiftAvailability} · 월 {(c.desiredIncomes || String(c.desiredIncome)).split(",").join("·")}만원</td>
                 <td className="px-4 py-3 text-sm">{c.recommendations[0] ? `${c.recommendations[0].listing.brand} ${c.recommendations[0].listing.category}` : "-"}</td>
                 <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${statusColor[c.status] ?? ""}`}>{c.status}</span></td>
                 <td className="px-4 py-3">

@@ -8,8 +8,10 @@ import { FinalizeButton } from "../result/finalize-button";
 import { IntroFrame } from "@/components/IntroFrame";
 import { IntroPager } from "./intro-pager";
 
-export default async function IntroPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function IntroPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ i?: string }> }) {
   const { id } = await params;
+  const { i } = await searchParams;
+  const initial = Number.isFinite(parseInt(i ?? "", 10)) ? parseInt(i!, 10) : 0;
   const consultation = await prisma.consultation.findUnique({
     where: { id },
     include: {
@@ -53,6 +55,7 @@ export default async function IntroPage({ params }: { params: Promise<{ id: stri
       ) : (
         <div className="mt-8">
           <IntroPager
+            initial={initial}
             labels={recs.map((r) => `${medal[r.rank - 1]} ${r.listing.brand} · ${r.listing.category}`)}
             slides={recs.map((r) => (
               <div key={r.id}>

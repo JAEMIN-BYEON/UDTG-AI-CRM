@@ -38,7 +38,8 @@ function hardFilter(
     .map((l) => {
       const capitalOk = c.initialCapital >= l.initialCapitalMin || rentalPossible(l.numberPlates);
       // 광역 선택형(경기남부 등) ↔ 시·군 자유 텍스트 매칭 (키워드 확장, src/lib/regions.ts)
-      const regionMatch = regionMatches(c.desiredRegion, l.region);
+      // 9.7 회의: 희망 지역 복수 선택 — 하나라도 맞으면 통과
+      const regionMatch = csv(c.desiredRegion).some((d) => regionMatches(d, l.region));
       return { listing: l, capitalOk, regionMatch };
     })
     .filter((x) => opts.relaxCapital || x.capitalOk)

@@ -69,8 +69,9 @@ model Consultation {
   hasCargoCert Boolean @default(false) // 화물운송종사자격증
 
   // 희망 조건
-  desiredIncome     Int // 희망 월수입 (만원)
-  desiredRegion     String
+  desiredIncome     Int // 희망 월수입 최소 (만원) — 복수 선택 시 최솟값 (엔진 기준)
+  desiredIncomes    String  @default("") // 희망 월수입 복수 선택 원본 (예: "400,500") — 9.7 회의
+  desiredRegion     String // 희망 근무지역 — 복수 선택 콤마 구분 (9.7 회의)
   desiredWorkHours  String  @default("")
   shiftAvailability String // 주간 | 야간 | 둘다
   desiredBrand      String  @default("")

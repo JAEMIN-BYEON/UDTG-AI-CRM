@@ -20,7 +20,7 @@ export async function generateReasons(c: Consultation, scored: Scored[]): Promis
     const customer = {
       연령: c.age,
       화물경력_년: c.cargoYears,
-      희망월순이익_만원: c.desiredIncome,
+      희망월순이익_만원: c.desiredIncomes || c.desiredIncome,
       희망지역: c.desiredRegion,
       주야간: c.shiftAvailability,
       근무불가시간: c.unavailableTimes || "없음",

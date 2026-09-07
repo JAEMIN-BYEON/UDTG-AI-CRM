@@ -88,8 +88,8 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
           </section>
           <section>
             <h2 className="mb-2 font-bold">🎯 희망 조건</h2>
-            <div className={row}><span className={dt}>희망 월순이익</span><span>{c.desiredIncome}만원{c.desiredIncome >= 700 ? " 이상" : ""}</span></div>
-            <div className={row}><span className={dt}>지역/시간</span><span>{c.desiredRegion} · {c.shiftAvailability}</span></div>
+            <div className={row}><span className={dt}>희망 월순이익</span><span>{(c.desiredIncomes || String(c.desiredIncome)).split(",").join(", ")}만원{c.desiredIncome >= 700 ? " 이상" : ""}</span></div>
+            <div className={row}><span className={dt}>지역/시간</span><span>{c.desiredRegion.split(",").join(", ")} · {c.shiftAvailability}</span></div>
             <div className={row}><span className={dt}>근무 불가 시간</span><span>{c.unavailableTimes || "-"}</span></div>
             <div className={row}><span className={dt}>체력/자금</span><span>체력 {c.fitnessLevel}/5 · {c.initialCapital}만원</span></div>
             <div className={row}><span className={dt}>희망 브랜드</span><span>{c.desiredBrand ? c.desiredBrand.split(",").join(", ") : "무관"}</span></div>

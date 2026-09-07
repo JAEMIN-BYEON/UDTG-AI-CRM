@@ -28,8 +28,8 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
       )}
 
       <div className="mt-8 space-y-6">
-        {consultation.recommendations.map((r) => (
-          <div key={r.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {consultation.recommendations.map((r, idx) => (
+          <div key={r.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-blue-300">
             <div className="flex items-start justify-between gap-4">
               <h2 className="text-2xl font-bold">
                 {medal[r.rank - 1]} {r.listing.brand} <span className="text-slate-400">·</span> {r.listing.category}
@@ -39,6 +39,13 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
               )}
             </div>
             <p className="mt-4 rounded-xl bg-slate-50 p-4 text-lg leading-relaxed">{r.reasonText}</p>
+            {/* 9.7 회의: 추천 물량을 눌러 해당 소개서를 바로 볼 수 있게 */}
+            <Link
+              href={`/consult/${consultation.id}/intro?i=${idx}`}
+              className="mt-4 flex min-h-13 items-center justify-center rounded-xl border-2 border-blue-200 bg-blue-50 px-6 text-lg font-bold text-blue-700 transition hover:bg-blue-100"
+            >
+              📄 {r.listing.brand} 소개서 보기 →
+            </Link>
           </div>
         ))}
       </div>

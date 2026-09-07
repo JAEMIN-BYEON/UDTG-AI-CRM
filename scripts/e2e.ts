@@ -33,8 +33,9 @@ async function main() {
   await page.click("text=다음 →");
 
   // K2-2: 희망 조건 (희망월순이익 선택형 + 신용상태)
-  await page.click('label:has(input[name="desiredIncome"][value="400"])');
-  await page.click('label:has(input[name="desiredRegion"][value="경기남부"])'); // 7.27: 선택형 전환
+  await page.click('button:has-text("400만원")'); // 9.7: 복수 선택 칩
+  await page.click('button:has-text("500만원")');
+  await page.getByRole("button", { name: "경기남부", exact: true }).click(); // 9.7: 복수 선택
   await page.click('label:has(input[name="shiftAvailability"][value="주간만"])');
   await page.fill('input[name="unavailableTimes"]', "새벽 4시 이전 어려움");
   await page.click('label:has(input[name="fitnessLevel"][value="3"])');
@@ -61,8 +62,8 @@ async function main() {
   console.log("추천 1순위 카드:", firstCard?.trim().slice(0, 60));
   await page.screenshot({ path: `${SHOT_DIR}/3-result.png`, fullPage: true });
 
-  // K3-2: 소개서 학습 — 모든 소개서를 넘겨봐야 신청 버튼이 나타난다
-  await page.click("text=센터 소개서 확인하기");
+  // K3-2: 소개서 학습 — 9.7: 추천 카드의 '소개서 보기'로 진입, 모두 확인해야 신청 버튼
+  await page.locator('a:has-text("소개서 보기")').first().click();
   await page.waitForURL(/\/intro/, { timeout: 15000 });
   await page.waitForSelector("text=소개서 확인");
   for (let i = 0; i < 5; i++) {

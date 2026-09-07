@@ -39,11 +39,38 @@ function numericOnly(e: React.FormEvent<HTMLInputElement>) {
   el.value = el.value.replace(/[^0-9]/g, "");
 }
 
+// 복수 선택 칩 (9.7 회의: 희망 지역·수입 중복 선택) — 값은 숨은 필드로 합쳐 제출
+function MultiChip({ options, selected, onToggle, suffix }: { options: string[]; selected: string[]; onToggle: (v: string) => void; suffix?: (o: string) => string }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((o) => {
+        const on = selected.includes(o);
+        return (
+          <button
+            key={o}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onToggle(o)}
+            className={`inline-block rounded-xl border-2 px-5 py-3 text-lg transition ${on ? "border-blue-600 bg-blue-50 font-bold text-blue-700" : "border-slate-300 bg-white"}`}
+          >
+            {suffix ? suffix(o) : o}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ConsultForm({ brands }: { brands: string[] }) {
   const [step, setStep] = useState(0);
   const [consented, setConsented] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [hasVehicle, setHasVehicle] = useState(false);
+  // 9.7 회의: 희망 수입·지역 복수 선택
+  const [incomes, setIncomes] = useState<string[]>([]);
+  const [regions, setRegions] = useState<string[]>([]);
+  const toggle = (set: React.Dispatch<React.SetStateAction<string[]>>) => (v: string) =>
+    set((arr) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]));
 
   const show = (i: number) => (step === i ? "" : "hidden");
 
@@ -143,13 +170,17 @@ export function ConsultForm({ brands }: { brands: string[] }) {
         <section className={`space-y-5 ${show(2)}`}>
           <h2 className="text-2xl font-bold">희망하시는 조건을 알려주세요</h2>
           <div>
-            <span className={label}>희망 월순이익 *</span>
-            <Radio name="desiredIncome" options={INCOME_OPTIONS} suffix={(o) => (o === "700" ? "700만원 이상" : `${o}만원`)} />
+            <span className={label}>희망 월순이익 * <span className="font-normal text-slate-400">(여러 개 선택 가능)</span></span>
+            <MultiChip options={INCOME_OPTIONS} selected={incomes} onToggle={toggle(setIncomes)} suffix={(o) => (o === "700" ? "700만원 이상" : `${o}만원`)} />
+            {/* 엔진 기준값(최솟값)과 표시용 원본을 숨은 필드로 제출 */}
+            <input tabIndex={-1} aria-hidden required name="desiredIncome" value={incomes.length ? String(Math.min(...incomes.map(Number))) : ""} onChange={() => {}} className="sr-only" />
+            <input type="hidden" name="desiredIncomes" value={incomes.join(",")} />
           </div>
-          {/* 7.27: 희망 근무지역은 광역 선택형 (경기도는 남부/북부 분리) */}
+          {/* 7.27: 광역 선택형 / 9.7: 복수 선택 */}
           <div>
-            <span className={label}>희망 근무지역 *</span>
-            <Radio name="desiredRegion" options={[...REGIONS]} />
+            <span className={label}>희망 근무지역 * <span className="font-normal text-slate-400">(여러 개 선택 가능)</span></span>
+            <MultiChip options={[...REGIONS]} selected={regions} onToggle={toggle(setRegions)} />
+            <input tabIndex={-1} aria-hidden required name="desiredRegion" value={regions.join(",")} onChange={() => {}} className="sr-only" />
           </div>
           <div><span className={label}>주간 / 야간 가능 여부 *</span><Radio name="shiftAvailability" options={["주간만", "야간만", "둘다"]} /></div>
           <div>
@@ -275,7 +306,7 @@ export function ConsultForm({ brands }: { brands: string[] }) {
           </div>
         </div>
       </form>
-      <p className="mt-12 text-center text-xs text-slate-300">v0.28.0</p>
+      <p className="mt-12 text-center text-xs text-slate-300">v0.29.0</p>
     </main>
   );
 }

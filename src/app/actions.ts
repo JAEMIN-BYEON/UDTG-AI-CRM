@@ -20,7 +20,8 @@ const consultationSchema = z.object({
   cargoYears: z.coerce.number().int().min(0).default(0),
   license: z.string().min(1),
   hasCargoCert: z.coerce.boolean().default(false),
-  desiredIncome: z.coerce.number().int().min(100), // 희망월순이익 (300~700 선택형)
+  desiredIncome: z.coerce.number().int().min(100), // 희망월순이익 최소 (복수 선택 시 최솟값)
+  desiredIncomes: z.string().default(""), // 복수 선택 원본 "400,500" (9.7 회의)
   desiredRegion: z.string().min(1),
   desiredWorkHours: z.string().default(""),
   shiftAvailability: z.enum(["주간만", "야간만", "둘다"]),
